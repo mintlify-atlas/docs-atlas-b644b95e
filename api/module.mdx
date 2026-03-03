@@ -1,0 +1,94 @@
+---
+title: 'NgxDependDropdownModule'
+description: 'Module API reference for ngx-depend-dropdown'
+---
+
+## Overview
+
+The main Angular module that exports the dependent dropdown component and provides necessary dependencies.
+
+```typescript
+import { NgxDependDropdownModule } from 'ngx-depend-dropdown';
+```
+
+## Module Metadata
+
+### Declarations
+
+The module declares the following components:
+
+- `NgxDependDropdownComponent` - The main dropdown component
+- `NgxDependDropdownNodeComponent` - Internal component for individual dropdown nodes
+
+### Imports
+
+The module imports:
+
+- `FormsModule` - For two-way data binding
+- `CommonModule` - For common Angular directives
+- `BrowserModule` - For browser-specific functionality
+
+### Exports
+
+The module exports:
+
+- `NgxDependDropdownComponent` - Available for use in your templates
+
+### Providers
+
+The module automatically provides:
+
+- `NgxDependDropdownService` - Injectable service (provided in root)
+
+## Usage
+
+### In NgModule-based Applications
+
+Import the module in your application or feature module:
+
+```typescript
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { NgxDependDropdownModule } from 'ngx-depend-dropdown';
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [AppComponent],
+  imports: [
+    BrowserModule,
+    NgxDependDropdownModule
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule { }
+```
+
+### In Standalone Components
+
+For Angular 14+ standalone components, import the module directly:
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxDependDropdownModule } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [NgxDependDropdownModule],
+  template: `
+    <ngx-depend-dropdown 
+      [data]="dropdownData" 
+      [config]="config">
+    </ngx-depend-dropdown>
+  `
+})
+export class AppComponent {
+  // Component logic
+}
+```
+
+## Related
+
+- [NgxDependDropdownComponent](/api/component) - Component API reference
+- [NgxDependDropdownService](/api/service) - Service API reference
+- [Installation Guide](/installation) - Setup instructions

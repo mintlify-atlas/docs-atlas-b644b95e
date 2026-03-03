@@ -57,6 +57,7 @@
           {
             "group": "Core API",
             "pages": [
+              "api/module",
               "api/component",
               "api/service",
               "api/types"
