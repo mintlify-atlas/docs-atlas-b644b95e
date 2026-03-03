@@ -1,0 +1,74 @@
+{
+  "projectType": "sdk-library",
+  "projectName": "ngx-depend-dropdown",
+  "projectDescription": "Lightweight Angular component for building dependent dropdown cascades with validation and multiselect support",
+  "theme": "palm",
+  "primaryColor": "#dd0031",
+  "lightColor": "#c3002f",
+  "darkColor": "#b52e31",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "installation",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/configuration",
+              "guides/validation",
+              "guides/styling",
+              "guides/multiselect"
+            ]
+          },
+          {
+            "group": "Examples",
+            "pages": [
+              "examples/basic-usage",
+              "examples/dependent-chains",
+              "examples/observable-data",
+              "examples/custom-validation"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Core API",
+            "pages": [
+              "api/component",
+              "api/service",
+              "api/types"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Linked dependent dropdowns with cascade behavior",
+    "Custom styling with configurable CSS classes",
+    "Built-in validation with custom error messages",
+    "Observable and array data sources",
+    "Multiselect support",
+    "Accessibility features"
+  ],
+  "publicApiSurface": [
+    "NgxDependDropdownModule",
+    "NgxDependDropdownComponent",
+    "NgxDependDropdownService",
+    "DropdownNode",
+    "DropdownData",
+    "DropdownConfig",
+    "UnavailableDropdownType"
+  ]
+}
