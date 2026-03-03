@@ -1,0 +1,340 @@
+---
+title: Validation
+description: Implement required validation and custom error messages for dropdowns
+---
+
+The ngx-depend-dropdown library provides built-in support for HTML5 required validation with customizable error messages. This guide shows you how to make dropdowns required and display validation feedback.
+
+## Basic Required Validation
+
+Make a dropdown required by setting the `required` property on a dropdown node:
+
+```typescript
+import { DropdownData } from 'ngx-depend-dropdown';
+
+export class AppComponent {
+  dropdownData: DropdownData = [
+    {
+      name: 'country',
+      label: 'Country',
+      required: true,  // Makes this dropdown required
+      visibility: () => true,
+      values: [],
+      setValues: () => this.getCountries()
+    }
+  ];
+}
+```
+
+## Required Property Types
+
+The `required` property accepts two types:
+
+<ParamField path="required" type="boolean | string">
+  Marks the dropdown as required for form validation.
+  
+  <Tabs>
+    <Tab title="Boolean">
+      ```typescript
+      {
+        name: 'category',
+        label: 'Category',
+        required: true,
+        visibility: () => true,
+        values: [],
+        setValues: () => this.getCategories()
+      }
+      ```
+      
+      Sets the HTML5 `required` attribute on the select element:
+      ```html
+      <select required="true" name="category">
+        <!-- options -->
+      </select>
+      ```
+    </Tab>
+    
+    <Tab title="String">
+      ```typescript
+      {
+        name: 'category',
+        label: 'Category',
+        required: 'required',
+        visibility: () => true,
+        values: [],
+        setValues: () => this.getCategories()
+      }
+      ```
+      
+      Provides more flexibility for template-driven forms:
+      ```html
+      <select required="required" name="category">
+        <!-- options -->
+      </select>
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+## Custom Error Messages
+
+Display custom error messages when a required field has no selection:
+
+<ParamField path="errorMessage" type="string" default="undefined">
+  Custom error message displayed when a required dropdown has no selected value.
+  
+  The error message appears in a div below the dropdown and is only shown when:
+  - The dropdown has `required` set to `true` or a truthy value
+  - The `selectedValue` is `null` or `undefined`
+  - An `errorMessage` is provided
+</ParamField>
+
+```typescript
+dropdownData: DropdownData = [
+  {
+    name: 'country',
+    label: 'Select Your Country',
+    required: true,
+    errorMessage: 'Please select a country to continue',
+    visibility: () => true,
+    values: [],
+    setValues: () => this.getCountries()
+  }
+];
+```
+
+The error message is rendered as:
+
+```html
+<div class="depend-dropdown-node-error-message">
+  Please select a country to continue
+</div>
+```
+
+## Complete Validation Example
+
+```typescript
+import { Component } from '@angular/core';
+import { DropdownData, DropdownConfig } from 'ngx-depend-dropdown';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+
+@Component({
+  selector: 'app-form',
+  template: `
+    <form #userForm="ngForm" (ngSubmit)="onSubmit(userForm)">
+      <ngx-depend-dropdown 
+        [data]="dropdownData" 
+        [config]="config"
+        (onChange)="handleChange($event)">
+      </ngx-depend-dropdown>
+      
+      <button type="submit" [disabled]="!userForm.valid">
+        Submit
+      </button>
+    </form>
+  `
+})
+export class FormComponent {
+  constructor(private http: HttpClient) {}
+  
+  config: DropdownConfig = {
+    unavailableType: 'disabled',
+    nodeClass: 'form-control'
+  };
+  
+  dropdownData: DropdownData = [
+    {
+      name: 'country',
+      label: 'Country',
+      required: true,
+      errorMessage: 'Country selection is required',
+      placeholder: 'Select a country',
+      visibility: () => true,
+      values: [],
+      setValues: () => {
+        return this.http.get('/api/countries').pipe(
+          map((data: any) => data.map((item: any) => ({
+            name: item.name,
+            id: item.id
+          })))
+        );
+      }
+    },
+    {
+      name: 'state',
+      label: 'State/Province',
+      required: true,
+      errorMessage: 'Please select your state or province',
+      placeholder: 'Select a state',
+      dependent: 'country',
+      visibility: () => true,
+      values: [],
+      setValues: () => {
+        const countryId = this.getCountryId();
+        if (!countryId) return [];
+        
+        return this.http.get(`/api/states/${countryId}`).pipe(
+          map((data: any) => data.map((item: any) => ({
+            name: item.name,
+            id: item.id
+          })))
+        );
+      }
+    },
+    {
+      name: 'city',
+      label: 'City',
+      required: true,
+      errorMessage: 'City is required to complete registration',
+      placeholder: 'Select a city',
+      dependent: 'state',
+      visibility: () => true,
+      values: [],
+      setValues: () => []
+    }
+  ];
+  
+  handleChange(event: any) {
+    console.log('Form state changed:', event);
+  }
+  
+  onSubmit(form: any) {
+    if (form.valid) {
+      console.log('Form submitted:', this.dropdownData);
+    }
+  }
+  
+  private getCountryId(): number | null {
+    const country = this.dropdownData.find(d => d.name === 'country');
+    return country?.selectedValue?.id || null;
+  }
+}
+```
+
+## Validation Styling
+
+Customize the appearance of error messages with CSS:
+
+```css
+/* Default error message styling */
+.depend-dropdown-node-error-message {
+  color: #dc3545;
+  font-size: 0.875rem;
+  margin-top: 0.25rem;
+}
+
+/* Bootstrap-style validation */
+.depend-dropdown-node-error-message {
+  color: #dc3545;
+  font-size: 80%;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+/* Material Design style */
+.depend-dropdown-node-error-message {
+  color: #f44336;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 400;
+}
+```
+
+## Conditional Validation
+
+You can conditionally apply validation based on other field values:
+
+```typescript
+dropdownData: DropdownData = [
+  {
+    name: 'shipping-country',
+    label: 'Shipping Country',
+    required: true,
+    errorMessage: 'Shipping country is required',
+    visibility: () => true,
+    values: [],
+    setValues: () => this.getCountries()
+  },
+  {
+    name: 'billing-country',
+    label: 'Billing Country',
+    // Only required if different from shipping country
+    required: this.useDifferentBillingAddress,
+    errorMessage: 'Billing country is required when using different billing address',
+    visibility: () => this.useDifferentBillingAddress,
+    values: [],
+    setValues: () => this.getCountries()
+  }
+];
+
+useDifferentBillingAddress = false;
+
+toggleBillingAddress() {
+  this.useDifferentBillingAddress = !this.useDifferentBillingAddress;
+  
+  // Update the required status
+  const billingNode = this.dropdownData.find(d => d.name === 'billing-country');
+  if (billingNode) {
+    billingNode.required = this.useDifferentBillingAddress;
+  }
+}
+```
+
+## Validation with Dependent Dropdowns
+
+<Info>
+  When working with dependent dropdowns, validation automatically considers the dependency chain. A dependent dropdown won't show an error until its parent dropdown has a valid selection.
+</Info>
+
+```typescript
+dropdownData: DropdownData = [
+  {
+    name: 'category',
+    label: 'Category',
+    required: true,
+    errorMessage: 'Please select a category',
+    visibility: () => true,
+    values: [],
+    setValues: () => this.getCategories()
+  },
+  {
+    name: 'subcategory',
+    label: 'Subcategory',
+    required: true,
+    errorMessage: 'Please select a subcategory',
+    dependent: 'category',
+    visibility: () => {
+      // Only visible when category is selected
+      return !!this.dropdownService.getNodeValue('category');
+    },
+    values: [],
+    setValues: () => this.getSubcategories()
+  }
+];
+```
+
+## Best Practices
+
+<Note>
+  **Clear Error Messages**: Write error messages that clearly explain what the user needs to do. Instead of "Required field", use "Please select your country to continue".
+</Note>
+
+<Warning>
+  **Accessibility**: The error message div uses a simple class-based approach. For enhanced accessibility, consider adding ARIA attributes:
+  
+  ```html
+  <select aria-required="true" aria-describedby="country-error">
+    <!-- options -->
+  </select>
+  <div id="country-error" role="alert" class="depend-dropdown-node-error-message">
+    Country selection is required
+  </div>
+  ```
+  
+  You may need to customize the component template for this.
+</Warning>
+
+<Note>
+  **Form Integration**: The library uses HTML5 `required` attribute, which integrates seamlessly with Angular template-driven forms and native form validation APIs.
+</Note>

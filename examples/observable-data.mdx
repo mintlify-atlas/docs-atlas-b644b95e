@@ -1,0 +1,428 @@
+---
+title: 'Observable Data'
+description: 'Load dropdown options dynamically using RxJS observables and HTTP requests'
+---
+
+## Overview
+
+The `setValues` function can return either a static array or an RxJS Observable. This enables dynamic data loading from APIs, databases, or any asynchronous source.
+
+## HTTP API Example
+
+<CodeGroup>
+
+```typescript component.ts
+import { Component, OnInit } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+import { DropdownConfig, DropdownData } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-observable-example',
+  templateUrl: './observable-example.component.html',
+  styleUrls: ['./observable-example.component.css']
+})
+export class ObservableExampleComponent implements OnInit {
+  dropdownData: DropdownData = [];
+  dropdownConfig: DropdownConfig = {};
+  loading = false;
+
+  constructor(
+    private http: HttpClient,
+    private dropdownService: NgxDependDropdownService
+  ) {}
+
+  ngOnInit(): void {
+    this.setupObservableDropdowns();
+    this.dropdownConfig = {
+      unavailableType: 'disabled',
+      containerClass: 'dropdown-wrapper',
+      nodeClass: 'custom-select'
+    };
+  }
+
+  setupObservableDropdowns() {
+    this.dropdownData = [
+      {
+        name: 'user',
+        visibility: () => true,
+        selectedValue: null,
+        placeholder: 'Select a user',
+        label: 'User',
+        values: [],
+        setValues: () => {
+          return this.http
+            .get('https://jsonplaceholder.typicode.com/users')
+            .pipe(
+              map((data: any) => {
+                return data.map((item: any) => ({
+                  id: item.id,
+                  name: item.name,
+                  email: item.email,
+                  username: item.username
+                }));
+              }),
+              catchError(error => {
+                console.error('Error loading users:', error);
+                return of([]);
+              })
+            );
+        }
+      },
+      {
+        name: 'post',
+        visibility: () => {
+          return !!this.dropdownService.getNodeValue('user');
+        },
+        selectedValue: null,
+        placeholder: 'Select a post',
+        label: 'Posts by User',
+        values: [],
+        dependent: 'user',
+        setValues: () => {
+          const user = this.dropdownService.getNodeValue('user');
+          
+          return this.http
+            .get(`https://jsonplaceholder.typicode.com/posts?userId=${user.id}`)
+            .pipe(
+              map((data: any) => {
+                return data.map((item: any) => ({
+                  id: item.id,
+                  name: item.title,
+                  body: item.body
+                }));
+              }),
+              catchError(error => {
+                console.error('Error loading posts:', error);
+                return of([]);
+              })
+            );
+        }
+      },
+      {
+        name: 'comment',
+        visibility: () => {
+          return !!this.dropdownService.getNodeValue('post');
+        },
+        selectedValue: null,
+        placeholder: 'Select a comment',
+        label: 'Comments on Post',
+        values: [],
+        dependent: 'post',
+        setValues: () => {
+          const post = this.dropdownService.getNodeValue('post');
+          
+          return this.http
+            .get(`https://jsonplaceholder.typicode.com/comments?postId=${post.id}`)
+            .pipe(
+              map((data: any) => {
+                return data.map((item: any) => ({
+                  id: item.id,
+                  name: `${item.name} (${item.email})`,
+                  body: item.body
+                }));
+              }),
+              catchError(error => {
+                console.error('Error loading comments:', error);
+                return of([]);
+              })
+            );
+        }
+      }
+    ];
+  }
+
+  handleChange(event: any) {
+    console.log('Selection changed:', event);
+    this.loading = true;
+    
+    // Simulate loading state
+    setTimeout(() => {
+      this.loading = false;
+    }, 500);
+  }
+}
+```
+
+```html template.html
+<div class="container">
+  <div class="header">
+    <h2>User Posts & Comments</h2>
+    <p>This example loads data from JSONPlaceholder API using Observables</p>
+  </div>
+  
+  <div class="loading-indicator" *ngIf="loading">
+    <span>Loading...</span>
+  </div>
+  
+  <ngx-depend-dropdown 
+    [data]="dropdownData" 
+    [config]="dropdownConfig"
+    (onChange)="handleChange($event)">
+  </ngx-depend-dropdown>
+  
+  <div class="detail-panel" *ngIf="dropdownData[2].selectedValue">
+    <h4>Comment Details</h4>
+    <div class="detail-content">
+      <p><strong>Comment:</strong> {{ dropdownData[2].selectedValue.name }}</p>
+      <p class="comment-body">{{ dropdownData[2].selectedValue.body }}</p>
+    </div>
+  </div>
+</div>
+```
+
+```css styles.css
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 30px;
+}
+
+.header h2 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.header p {
+  color: #7f8c8d;
+  margin-bottom: 30px;
+}
+
+.loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  background-color: #fff3cd;
+  border: 1px solid #ffc107;
+  border-radius: 4px;
+  margin-bottom: 20px;
+  color: #856404;
+}
+
+.dropdown-wrapper {
+  margin-bottom: 20px;
+}
+
+.custom-select {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #e0e0e0;
+  border-radius: 6px;
+  font-size: 16px;
+  transition: border-color 0.3s;
+}
+
+.custom-select:focus {
+  outline: none;
+  border-color: #3b82f6;
+}
+
+.custom-select:disabled {
+  background-color: #f5f5f5;
+  cursor: not-allowed;
+}
+
+.detail-panel {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  border: 1px solid #dee2e6;
+}
+
+.detail-panel h4 {
+  margin-top: 0;
+  color: #495057;
+}
+
+.detail-content {
+  margin-top: 15px;
+}
+
+.comment-body {
+  padding: 10px;
+  background-color: white;
+  border-left: 3px solid #3b82f6;
+  border-radius: 4px;
+  font-style: italic;
+  color: #6c757d;
+}
+```
+
+</CodeGroup>
+
+## Module Configuration
+
+<Note>
+  Don't forget to import `HttpClientModule` to enable HTTP requests in your application.
+</Note>
+
+```typescript app.module.ts
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
+import { NgxDependDropdownModule } from 'ngx-depend-dropdown';
+import { ObservableExampleComponent } from './observable-example.component';
+
+@NgModule({
+  declarations: [ObservableExampleComponent],
+  imports: [
+    BrowserModule,
+    HttpClientModule,
+    NgxDependDropdownModule
+  ],
+  bootstrap: [ObservableExampleComponent]
+})
+export class AppModule { }
+```
+
+## Using a Service for Data
+
+<Tip>
+  For better code organization, create a dedicated service to handle API calls.
+</Tip>
+
+<CodeGroup>
+
+```typescript data.service.ts
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { map, catchError } from 'rxjs/operators';
+import { of } from 'rxjs';
+
+@Injectable({
+  providedIn: 'root'
+})
+export class DataService {
+  private apiUrl = 'https://api.example.com';
+
+  constructor(private http: HttpClient) {}
+
+  getCountries(): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/countries`).pipe(
+      map(data => data.map(item => ({
+        id: item.code,
+        name: item.name
+      }))),
+      catchError(error => {
+        console.error('Error fetching countries:', error);
+        return of([]);
+      })
+    );
+  }
+
+  getStatesByCountry(countryId: string): Observable<any[]> {
+    return this.http.get<any[]>(`${this.apiUrl}/countries/${countryId}/states`).pipe(
+      map(data => data.map(item => ({
+        id: item.code,
+        name: item.name
+      }))),
+      catchError(error => {
+        console.error('Error fetching states:', error);
+        return of([]);
+      })
+    );
+  }
+}
+```
+
+```typescript component-with-service.ts
+import { Component, OnInit } from '@angular/core';
+import { DataService } from './data.service';
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+import { DropdownData } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-service-example',
+  template: `
+    <ngx-depend-dropdown 
+      [data]="dropdownData" 
+      [config]="dropdownConfig">
+    </ngx-depend-dropdown>
+  `
+})
+export class ServiceExampleComponent implements OnInit {
+  dropdownData: DropdownData = [];
+  dropdownConfig = { unavailableType: 'disabled' };
+
+  constructor(
+    private dataService: DataService,
+    private dropdownService: NgxDependDropdownService
+  ) {}
+
+  ngOnInit(): void {
+    this.dropdownData = [
+      {
+        name: 'country',
+        visibility: () => true,
+        selectedValue: null,
+        placeholder: 'Select country',
+        values: [],
+        setValues: () => this.dataService.getCountries()
+      },
+      {
+        name: 'state',
+        visibility: () => !!this.dropdownService.getNodeValue('country'),
+        selectedValue: null,
+        placeholder: 'Select state',
+        values: [],
+        dependent: 'country',
+        setValues: () => {
+          const country = this.dropdownService.getNodeValue('country');
+          return this.dataService.getStatesByCountry(country.id);
+        }
+      }
+    ];
+  }
+}
+```
+
+</CodeGroup>
+
+## Error Handling
+
+<Note>
+  Always use `catchError` to handle API failures gracefully and return an empty array to prevent dropdown errors.
+</Note>
+
+```typescript
+setValues: () => {
+  return this.http.get('https://api.example.com/data').pipe(
+    map((data: any) => data.map(item => ({
+      id: item.id,
+      name: item.name
+    }))),
+    catchError(error => {
+      console.error('API Error:', error);
+      // Return empty array on error
+      return of([]);
+    })
+  );
+}
+```
+
+## Loading States
+
+You can track loading states by monitoring the onChange event:
+
+```typescript
+handleChange(event: any) {
+  this.loading = true;
+  
+  // The library automatically handles the async loading
+  // Set loading to false after a short delay or in the subscription
+  setTimeout(() => {
+    this.loading = false;
+  }, 500);
+}
+```
+
+## Next Steps
+
+- Add [custom validation](/examples/custom-validation) to your observable dropdowns
+- Review [dependent chains](/examples/dependent-chains) for complex relationships
+- Check [basic usage](/examples/basic-usage) for fundamental concepts

@@ -1,0 +1,236 @@
+---
+title: Configuration
+description: Configure dropdown behavior and appearance with DropdownConfig
+---
+
+The `DropdownConfig` interface allows you to customize the behavior and styling of your dependent dropdowns. Configure how unavailable dropdowns are displayed and apply custom CSS classes.
+
+## Basic Configuration
+
+Pass a configuration object to the `[config]` input:
+
+```typescript
+import { DropdownConfig } from 'ngx-depend-dropdown';
+
+export class AppComponent {
+  config: DropdownConfig = {
+    unavailableType: 'disabled',
+    containerClass: 'my-dropdown-container',
+    nodeClass: 'custom-select'
+  };
+}
+```
+
+```html
+<ngx-depend-dropdown 
+  [data]="dropdownData" 
+  [config]="config"
+  (onChange)="handleChange($event)">
+</ngx-depend-dropdown>
+```
+
+## Configuration Properties
+
+<ParamField path="unavailableType" type="'disabled' | 'invisible'" default="undefined">
+  Controls how unavailable dropdowns are displayed when their dependencies are not met.
+  
+  - `'disabled'` - Dropdown remains visible but is disabled (grayed out)
+  - `'invisible'` - Dropdown is hidden from view using CSS `hidden` attribute
+  
+  <Tabs>
+    <Tab title="Disabled">
+      ```typescript
+      config: DropdownConfig = {
+        unavailableType: 'disabled'
+      };
+      ```
+      
+      When a dependent dropdown's parent has no value selected, the dropdown will be disabled but still visible to users.
+    </Tab>
+    
+    <Tab title="Invisible">
+      ```typescript
+      config: DropdownConfig = {
+        unavailableType: 'invisible'
+      };
+      ```
+      
+      When a dependent dropdown's parent has no value selected, the dropdown will be completely hidden from view.
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="containerClass" type="string | string[]" default="undefined">
+  CSS class(es) applied to the container div that wraps all dropdowns.
+  
+  <Tabs>
+    <Tab title="Single Class">
+      ```typescript
+      config: DropdownConfig = {
+        containerClass: 'dropdown-wrapper'
+      };
+      ```
+      
+      Applies a single class to the container element:
+      ```html
+      <div class="depend-dropdown-container dropdown-wrapper">
+        <!-- dropdowns -->
+      </div>
+      ```
+    </Tab>
+    
+    <Tab title="Multiple Classes">
+      ```typescript
+      config: DropdownConfig = {
+        containerClass: ['dropdown-wrapper', 'form-group', 'mb-4']
+      };
+      ```
+      
+      Applies multiple classes to the container element:
+      ```html
+      <div class="depend-dropdown-container dropdown-wrapper form-group mb-4">
+        <!-- dropdowns -->
+      </div>
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+<ParamField path="nodeClass" type="string | string[]" default="undefined">
+  CSS class(es) applied to each individual dropdown select element.
+  
+  <Tabs>
+    <Tab title="Single Class">
+      ```typescript
+      config: DropdownConfig = {
+        nodeClass: 'form-control'
+      };
+      ```
+      
+      Each dropdown receives the class:
+      ```html
+      <select class="depend-dropdown-node-select form-control">
+        <!-- options -->
+      </select>
+      ```
+    </Tab>
+    
+    <Tab title="Multiple Classes">
+      ```typescript
+      config: DropdownConfig = {
+        nodeClass: ['form-control', 'custom-select', 'select-lg']
+      };
+      ```
+      
+      Each dropdown receives all classes:
+      ```html
+      <select class="depend-dropdown-node-select form-control custom-select select-lg">
+        <!-- options -->
+      </select>
+      ```
+    </Tab>
+  </Tabs>
+</ParamField>
+
+## Complete Example
+
+```typescript
+import { Component } from '@angular/core';
+import { DropdownConfig, DropdownData } from 'ngx-depend-dropdown';
+import { HttpClient } from '@angular/common/http';
+import { map } from 'rxjs/operators';
+
+@Component({
+  selector: 'app-root',
+  template: `
+    <ngx-depend-dropdown 
+      [data]="dropdownData" 
+      [config]="config"
+      (onChange)="handleChange($event)">
+    </ngx-depend-dropdown>
+  `
+})
+export class AppComponent {
+  constructor(private http: HttpClient) {}
+  
+  config: DropdownConfig = {
+    // Disable dependent dropdowns when parent is not selected
+    unavailableType: 'disabled',
+    
+    // Add Bootstrap classes to container
+    containerClass: ['container', 'my-4'],
+    
+    // Style all dropdowns with Bootstrap form-control
+    nodeClass: 'form-control'
+  };
+  
+  dropdownData: DropdownData = [
+    {
+      name: 'country',
+      label: 'Country',
+      visibility: () => true,
+      values: [],
+      setValues: () => {
+        return this.http.get('/api/countries').pipe(
+          map((data: any) => data.map((item: any) => ({
+            name: item.name,
+            id: item.id
+          })))
+        );
+      }
+    },
+    {
+      name: 'city',
+      label: 'City',
+      visibility: () => true,
+      dependent: 'country',
+      values: [],
+      setValues: () => []
+    }
+  ];
+  
+  handleChange(event: any) {
+    console.log('Changed dropdown:', event.changedDropdown.name);
+    console.log('Full data:', event.fullData);
+  }
+}
+```
+
+## Best Practices
+
+<Note>
+  **Recommended Approach**: Use `unavailableType: 'disabled'` for better UX. This keeps the form structure visible and helps users understand the complete flow, even when certain fields are not yet available.
+</Note>
+
+<Warning>
+  When using `unavailableType: 'invisible'`, ensure your layout doesn't shift dramatically as dropdowns appear and disappear. Consider using CSS transitions or fixed heights.
+</Warning>
+
+<Info>
+  The `containerClass` and `nodeClass` properties work well with CSS frameworks like Bootstrap, Tailwind CSS, or Material Design. You can mix library-provided classes with your custom styles.
+</Info>
+
+## Dynamic Configuration
+
+You can change the configuration dynamically based on your application state:
+
+```typescript
+export class AppComponent {
+  config: DropdownConfig = {
+    unavailableType: 'disabled',
+    nodeClass: 'form-control'
+  };
+  
+  switchToCompactMode() {
+    this.config = {
+      unavailableType: 'invisible',
+      containerClass: 'compact-layout',
+      nodeClass: ['form-control', 'form-control-sm']
+    };
+  }
+}
+```
+
+<Note>
+  Configuration changes will take effect immediately, but changing `unavailableType` at runtime may cause layout shifts. It's best to set this during component initialization.
+</Note>

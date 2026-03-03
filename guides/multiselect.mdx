@@ -1,0 +1,502 @@
+---
+title: Multiselect
+description: Enable multiple selection support in dependent dropdowns
+---
+
+The ngx-depend-dropdown library supports multiple selection mode, allowing users to select multiple options from a dropdown. This guide covers how to enable and work with multiselect dropdowns.
+
+## Enabling Multiselect
+
+Enable multiselect mode by setting the `isMultiple` property to `true` on a dropdown node:
+
+```typescript
+import { DropdownData } from 'ngx-depend-dropdown';
+
+export class AppComponent {
+  dropdownData: DropdownData = [
+    {
+      name: 'skills',
+      label: 'Select Your Skills',
+      isMultiple: true,  // Enables multiselect
+      visibility: () => true,
+      values: [],
+      setValues: () => this.getSkills()
+    }
+  ];
+  
+  getSkills() {
+    return [
+      { id: 1, name: 'JavaScript' },
+      { id: 2, name: 'TypeScript' },
+      { id: 3, name: 'Angular' },
+      { id: 4, name: 'React' },
+      { id: 5, name: 'Vue.js' }
+    ];
+  }
+}
+```
+
+This renders an HTML5 multiselect element:
+
+```html
+<select multiple="true" name="skills">
+  <option value="null">Select Your Skills</option>
+  <option value="{id: 1, name: 'JavaScript'}">JavaScript</option>
+  <option value="{id: 2, name: 'TypeScript'}">TypeScript</option>
+  <!-- more options -->
+</select>
+```
+
+## Multiselect Property
+
+<ParamField path="isMultiple" type="boolean" default="false">
+  Enables multiple selection mode for the dropdown.
+  
+  When set to `true`:
+  - The HTML `multiple` attribute is added to the select element
+  - Users can select multiple options using Ctrl/Cmd + Click (desktop) or native mobile controls
+  - The `selectedValue` can contain multiple items
+  - Default browser styling shows a list-style selection box
+</ParamField>
+
+## Selected Values
+
+With multiselect enabled, the `selectedValue` property can hold multiple selections:
+
+```typescript
+dropdownData: DropdownData = [
+  {
+    name: 'technologies',
+    label: 'Technologies',
+    isMultiple: true,
+    selectedValue: [  // Preselect multiple values
+      { id: 1, name: 'Angular' },
+      { id: 2, name: 'TypeScript' }
+    ],
+    visibility: () => true,
+    values: [],
+    setValues: () => this.getTechnologies()
+  }
+];
+```
+
+## Handling Multiselect Changes
+
+Listen to the `onChange` event to track multiselect changes:
+
+```typescript
+import { Component } from '@angular/core';
+import { DropdownData, DropdownConfig } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-multiselect',
+  template: `
+    <ngx-depend-dropdown 
+      [data]="dropdownData" 
+      [config]="config"
+      (onChange)="handleChange($event)">
+    </ngx-depend-dropdown>
+    
+    <div *ngIf="selectedSkills.length > 0">
+      <h3>Selected Skills:</h3>
+      <ul>
+        <li *ngFor="let skill of selectedSkills">{{ skill.name }}</li>
+      </ul>
+    </div>
+  `
+})
+export class MultiselectComponent {
+  selectedSkills: any[] = [];
+  
+  config: DropdownConfig = {
+    nodeClass: 'form-control'
+  };
+  
+  dropdownData: DropdownData = [
+    {
+      name: 'skills',
+      label: 'Select Your Skills',
+      placeholder: 'Choose multiple skills',
+      isMultiple: true,
+      visibility: () => true,
+      values: [],
+      setValues: () => [
+        { id: 1, name: 'JavaScript' },
+        { id: 2, name: 'TypeScript' },
+        { id: 3, name: 'Angular' },
+        { id: 4, name: 'React' },
+        { id: 5, name: 'Vue.js' },
+        { id: 6, name: 'Node.js' }
+      ]
+    }
+  ];
+  
+  handleChange(event: any) {
+    const changedDropdown = event.changedDropdown;
+    
+    if (changedDropdown.name === 'skills') {
+      // selectedValue is an array for multiselect
+      this.selectedSkills = Array.isArray(changedDropdown.selectedValue) 
+        ? changedDropdown.selectedValue 
+        : [];
+      
+      console.log('Selected skills:', this.selectedSkills);
+    }
+  }
+}
+```
+
+## Multiselect with Dependencies
+
+Multiselect dropdowns can also have dependencies and be dependent on other dropdowns:
+
+```typescript
+dropdownData: DropdownData = [
+  {
+    name: 'category',
+    label: 'Category',
+    visibility: () => true,
+    values: [],
+    setValues: () => [
+      { id: 1, name: 'Programming' },
+      { id: 2, name: 'Design' },
+      { id: 3, name: 'Marketing' }
+    ]
+  },
+  {
+    name: 'skills',
+    label: 'Skills',
+    isMultiple: true,  // Multiselect dependent dropdown
+    dependent: 'category',
+    visibility: () => {
+      return !!this.dropdownService.getNodeValue('category');
+    },
+    values: [],
+    setValues: () => {
+      const category = this.dropdownService.getNodeValue('category');
+      
+      if (category?.id === 1) {
+        return [
+          { id: 1, name: 'JavaScript' },
+          { id: 2, name: 'Python' },
+          { id: 3, name: 'Java' }
+        ];
+      } else if (category?.id === 2) {
+        return [
+          { id: 4, name: 'Photoshop' },
+          { id: 5, name: 'Illustrator' },
+          { id: 6, name: 'Figma' }
+        ];
+      }
+      
+      return [];
+    }
+  }
+];
+```
+
+## Styling Multiselect Dropdowns
+
+Multiselect dropdowns have different default browser styling. Customize with CSS:
+
+```css
+/* Basic multiselect styling */
+::ng-deep .depend-dropdown-node-select[multiple] {
+  min-height: 150px;
+  padding: 8px;
+}
+
+::ng-deep .depend-dropdown-node-select[multiple] option {
+  padding: 8px 12px;
+  margin-bottom: 4px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+::ng-deep .depend-dropdown-node-select[multiple] option:hover {
+  background-color: #e3f2fd;
+}
+
+::ng-deep .depend-dropdown-node-select[multiple] option:checked {
+  background-color: #2196f3;
+  color: white;
+}
+
+/* Remove default highlight */
+::ng-deep .depend-dropdown-node-select[multiple] option:checked::before {
+  content: '✓ ';
+  font-weight: bold;
+}
+```
+
+```typescript
+@Component({
+  styles: [`
+    ::ng-deep .multiselect-dropdown {
+      height: 200px;
+      border: 2px solid #e0e0e0;
+      border-radius: 8px;
+      padding: 12px;
+    }
+    
+    ::ng-deep .multiselect-dropdown option {
+      padding: 10px;
+      margin: 4px 0;
+      border-radius: 6px;
+      transition: all 0.2s;
+    }
+    
+    ::ng-deep .multiselect-dropdown option:hover {
+      background: linear-gradient(90deg, #e3f2fd 0%, #bbdefb 100%);
+    }
+    
+    ::ng-deep .multiselect-dropdown option:checked {
+      background: linear-gradient(90deg, #2196f3 0%, #1976d2 100%);
+      color: white;
+      font-weight: 500;
+    }
+  `]
+})
+export class StyledMultiselectComponent {
+  config: DropdownConfig = {
+    nodeClass: 'multiselect-dropdown'
+  };
+}
+```
+
+## Validation with Multiselect
+
+Validate multiselect dropdowns using the `required` property:
+
+```typescript
+dropdownData: DropdownData = [
+  {
+    name: 'required-skills',
+    label: 'Required Skills',
+    isMultiple: true,
+    required: true,
+    errorMessage: 'Please select at least one skill',
+    placeholder: 'Select required skills',
+    visibility: () => true,
+    values: [],
+    setValues: () => this.getSkills()
+  }
+];
+```
+
+<Warning>
+  The built-in validation checks if `selectedValue` is `null` or `undefined`. For multiselect, you may want to add custom validation to ensure a minimum number of selections:
+  
+  ```typescript
+  handleChange(event: any) {
+    const dropdown = event.changedDropdown;
+    
+    if (dropdown.isMultiple && dropdown.required) {
+      const selections = Array.isArray(dropdown.selectedValue) 
+        ? dropdown.selectedValue 
+        : [];
+      
+      if (selections.length === 0) {
+        console.warn('Please select at least one option');
+      }
+    }
+  }
+  ```
+</Warning>
+
+## Complete Multiselect Example
+
+```typescript
+import { Component } from '@angular/core';
+import { DropdownData, DropdownConfig } from 'ngx-depend-dropdown';
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-job-application',
+  template: `
+    <div class="job-application-form">
+      <h2>Job Application</h2>
+      
+      <ngx-depend-dropdown 
+        [data]="dropdownData" 
+        [config]="config"
+        (onChange)="handleChange($event)">
+      </ngx-depend-dropdown>
+      
+      <div class="summary" *ngIf="showSummary()">
+        <h3>Application Summary</h3>
+        <p><strong>Position:</strong> {{ getSelectedPosition() }}</p>
+        <p><strong>Skills:</strong></p>
+        <ul>
+          <li *ngFor="let skill of getSelectedSkills()">{{ skill.name }}</li>
+        </ul>
+        <p><strong>Languages:</strong></p>
+        <ul>
+          <li *ngFor="let lang of getSelectedLanguages()">{{ lang.name }}</li>
+        </ul>
+      </div>
+    </div>
+  `,
+  styles: [`
+    .job-application-form {
+      max-width: 600px;
+      margin: 0 auto;
+      padding: 2rem;
+    }
+    
+    .summary {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: #f5f5f5;
+      border-radius: 8px;
+    }
+    
+    ::ng-deep .multiselect-field {
+      height: 180px;
+      border: 2px solid #ddd;
+      border-radius: 6px;
+    }
+    
+    ::ng-deep .multiselect-field option:checked {
+      background: #4caf50;
+      color: white;
+    }
+  `]
+})
+export class JobApplicationComponent {
+  constructor(private dropdownService: NgxDependDropdownService) {}
+  
+  config: DropdownConfig = {
+    unavailableType: 'disabled',
+    containerClass: 'form-container',
+    nodeClass: 'form-control'
+  };
+  
+  dropdownData: DropdownData = [
+    {
+      name: 'position',
+      label: 'Position',
+      required: true,
+      errorMessage: 'Please select a position',
+      visibility: () => true,
+      values: [],
+      setValues: () => [
+        { id: 1, name: 'Frontend Developer' },
+        { id: 2, name: 'Backend Developer' },
+        { id: 3, name: 'Full Stack Developer' }
+      ]
+    },
+    {
+      name: 'skills',
+      label: 'Technical Skills (Select multiple)',
+      isMultiple: true,
+      required: true,
+      errorMessage: 'Please select your technical skills',
+      dependent: 'position',
+      visibility: () => {
+        return !!this.dropdownService.getNodeValue('position');
+      },
+      values: [],
+      setValues: () => {
+        const position = this.dropdownService.getNodeValue('position');
+        
+        if (position?.id === 1) {
+          return [
+            { id: 1, name: 'HTML/CSS' },
+            { id: 2, name: 'JavaScript' },
+            { id: 3, name: 'TypeScript' },
+            { id: 4, name: 'Angular' },
+            { id: 5, name: 'React' }
+          ];
+        } else if (position?.id === 2) {
+          return [
+            { id: 6, name: 'Node.js' },
+            { id: 7, name: 'Python' },
+            { id: 8, name: 'Java' },
+            { id: 9, name: 'SQL' },
+            { id: 10, name: 'MongoDB' }
+          ];
+        } else {
+          return [
+            { id: 1, name: 'HTML/CSS' },
+            { id: 2, name: 'JavaScript' },
+            { id: 3, name: 'TypeScript' },
+            { id: 6, name: 'Node.js' },
+            { id: 9, name: 'SQL' }
+          ];
+        }
+      }
+    },
+    {
+      name: 'languages',
+      label: 'Languages (Select multiple)',
+      isMultiple: true,
+      placeholder: 'Select languages you speak',
+      visibility: () => true,
+      values: [],
+      setValues: () => [
+        { id: 1, name: 'English' },
+        { id: 2, name: 'Spanish' },
+        { id: 3, name: 'French' },
+        { id: 4, name: 'German' },
+        { id: 5, name: 'Mandarin' }
+      ]
+    }
+  ];
+  
+  handleChange(event: any) {
+    console.log('Dropdown changed:', event.changedDropdown.name);
+    console.log('Full data:', event.fullData);
+  }
+  
+  showSummary(): boolean {
+    return this.dropdownData.every(d => 
+      !d.required || d.selectedValue !== null
+    );
+  }
+  
+  getSelectedPosition(): string {
+    const position = this.dropdownData.find(d => d.name === 'position');
+    return position?.selectedValue?.name || '';
+  }
+  
+  getSelectedSkills(): any[] {
+    const skills = this.dropdownData.find(d => d.name === 'skills');
+    return Array.isArray(skills?.selectedValue) ? skills.selectedValue : [];
+  }
+  
+  getSelectedLanguages(): any[] {
+    const languages = this.dropdownData.find(d => d.name === 'languages');
+    return Array.isArray(languages?.selectedValue) ? languages.selectedValue : [];
+  }
+}
+```
+
+## Best Practices
+
+<Note>
+  **User Experience**: Multiselect dropdowns can be confusing for users unfamiliar with Ctrl/Cmd+Click interaction. Consider adding instructional text:
+  
+  ```html
+  <p class="help-text">Hold Ctrl (Windows) or Cmd (Mac) to select multiple options</p>
+  ```
+</Note>
+
+<Info>
+  **Mobile Devices**: On mobile devices, multiselect dropdowns show native selection UI which is generally more user-friendly than desktop browsers.
+</Info>
+
+<Warning>
+  **Accessibility**: Always provide clear labels and instructions for multiselect dropdowns. Consider ARIA attributes:
+  
+  ```html
+  <label for="skills">Select Skills (Multiple selections allowed)</label>
+  <select id="skills" name="skills" multiple aria-multiselectable="true">
+    <!-- options -->
+  </select>
+  ```
+</Warning>
+
+<Note>
+  **Alternative UI**: For better UX, consider using a custom multiselect component with checkboxes instead of the native HTML multiselect. The native multiselect works but may not provide the best user experience for all use cases.
+</Note>

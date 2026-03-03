@@ -1,0 +1,270 @@
+---
+title: 'NgxDependDropdownComponent'
+description: 'Component API reference for ngx-depend-dropdown'
+---
+
+## Overview
+
+The main component for rendering dependent dropdown chains in Angular applications.
+
+**Selector:** `ngx-depend-dropdown`
+
+## Inputs
+
+<ParamField path="data" type="DropdownData">
+  Array of dropdown node configurations that define the dependent dropdowns to render.
+  
+  Default: `[]`
+  
+  ```typescript
+  @Input() data: DropdownData = [];
+  ```
+  
+  <Expandable title="Example">
+    ```typescript
+    data = [
+      {
+        name: 'country',
+        label: 'Country',
+        visibility: () => true,
+        setValues: () => countries,
+        values: []
+      },
+      {
+        name: 'city',
+        label: 'City',
+        dependent: 'country',
+        visibility: () => !!this.service.getNodeValue('country'),
+        setValues: () => cities.filter(c => c.countryId === this.service.getNodeValue('country')?.id),
+        values: []
+      }
+    ];
+    ```
+  </Expandable>
+</ParamField>
+
+<ParamField path="config" type="DropdownConfig">
+  Configuration object for customizing dropdown behavior and styling.
+  
+  Default: `{}`
+  
+  ```typescript
+  @Input() config: DropdownConfig = {};
+  ```
+  
+  <Expandable title="Example">
+    ```typescript
+    config = {
+      unavailableType: 'disabled',
+      containerClass: 'dropdown-container',
+      nodeClass: ['dropdown-node', 'custom-class']
+    };
+    ```
+  </Expandable>
+</ParamField>
+
+## Outputs
+
+<ParamField path="onChange" type="EventEmitter<ChangeEvent>">
+  Emitted when any dropdown value changes. Provides the native event, the changed dropdown node, and the full data array.
+  
+  ```typescript
+  @Output() onChange: EventEmitter<{
+    nativeEvent: Event;
+    changedDropdown: DropdownNode;
+    fullData: DropdownData;
+  }> = new EventEmitter();
+  ```
+  
+  <Expandable title="Event Properties">
+    <ResponseField name="nativeEvent" type="Event">
+      The native browser change event
+    </ResponseField>
+    
+    <ResponseField name="changedDropdown" type="DropdownNode">
+      The dropdown node that was changed
+    </ResponseField>
+    
+    <ResponseField name="fullData" type="DropdownData">
+      The complete array of all dropdown nodes with current state
+    </ResponseField>
+  </Expandable>
+  
+  <Expandable title="Example">
+    ```typescript
+    onDropdownChange(event: any) {
+      console.log('Native event:', event.nativeEvent);
+      console.log('Changed dropdown:', event.changedDropdown);
+      console.log('All dropdowns:', event.fullData);
+    }
+    ```
+    
+    ```html
+    <ngx-depend-dropdown
+      [data]="data"
+      [config]="config"
+      (onChange)="onDropdownChange($event)">
+    </ngx-depend-dropdown>
+    ```
+  </Expandable>
+</ParamField>
+
+## Public Methods
+
+### arrayToObservable()
+
+Converts an array to an Observable, or returns the Observable if already one.
+
+```typescript
+arrayToObservable(array: Observable<any> | any[]): Observable<any>
+```
+
+<ParamField path="array" type="Observable<any> | any[]">
+  The array or Observable to convert
+</ParamField>
+
+<ResponseField name="return" type="Observable<any>">
+  An Observable of the array
+</ResponseField>
+
+<Expandable title="Usage">
+  This method is used internally to normalize array and Observable inputs. It allows dropdown values to be provided either as static arrays or as Observables for async data loading.
+  
+  ```typescript
+  const observable = this.arrayToObservable([1, 2, 3]);
+  observable.subscribe(values => console.log(values)); // [1, 2, 3]
+  ```
+</Expandable>
+
+### select()
+
+Handles dropdown selection changes, updates dependent dropdowns, and emits the onChange event.
+
+```typescript
+select(args: { $event: Event; data: DropdownNode }): void
+```
+
+<ParamField path="args" type="object">
+  <Expandable title="Properties">
+    <ParamField path="$event" type="Event">
+      The native change event
+    </ParamField>
+    
+    <ParamField path="data" type="DropdownNode">
+      The dropdown node that was changed
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<Expandable title="Behavior">
+  When a dropdown value changes, this method:
+  1. Resets the `selectedValue` of all dependent dropdowns
+  2. Re-evaluates visibility for all dropdowns
+  3. Updates disabled/invisible states based on configuration
+  4. Emits the `onChange` event with full context
+</Expandable>
+
+### init()
+
+Initializes all dropdown nodes with default values and evaluates initial visibility.
+
+```typescript
+init(): void
+```
+
+<Expandable title="Behavior">
+  This method is called automatically during `ngOnInit` and:
+  1. Sets default placeholder to 'Select' if not provided
+  2. Evaluates initial visibility for each dropdown
+  3. Sets initial selected values to `null` if not provided
+  4. Calls `setValues()` for each dropdown node
+</Expandable>
+
+### setValues()
+
+Sets the available values for a dropdown node by calling its `setValues` function.
+
+```typescript
+setValues(node: DropdownNode): void
+```
+
+<ParamField path="node" type="DropdownNode">
+  The dropdown node to set values for
+</ParamField>
+
+<Expandable title="Behavior">
+  This method:
+  1. Calls the node's `setValues()` function
+  2. Converts the result to an Observable
+  3. Subscribes and updates the node's `values` array
+  4. Updates the `selectedValue` if it matches an available value
+</Expandable>
+
+## Lifecycle Hooks
+
+### ngOnInit()
+
+Initializes the component by setting up the service with data and config, then calling `init()`.
+
+### ngAfterViewInit()
+
+Sets the initial disabled state for dropdowns with `unavailableType: 'disabled'` configuration.
+
+## Usage Example
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-example',
+  template: `
+    <ngx-depend-dropdown
+      [data]="dropdowns"
+      [config]="config"
+      (onChange)="handleChange($event)">
+    </ngx-depend-dropdown>
+  `
+})
+export class ExampleComponent {
+  dropdowns = [
+    {
+      name: 'category',
+      label: 'Category',
+      placeholder: 'Select a category',
+      visibility: () => true,
+      setValues: () => this.getCategories(),
+      values: []
+    },
+    {
+      name: 'product',
+      label: 'Product',
+      dependent: 'category',
+      visibility: () => !!this.service.getNodeValue('category'),
+      setValues: () => this.getProducts(this.service.getNodeValue('category')?.id),
+      values: []
+    }
+  ];
+  
+  config = {
+    unavailableType: 'disabled' as const,
+    containerClass: 'my-dropdown-container'
+  };
+  
+  constructor(private service: NgxDependDropdownService) {}
+  
+  handleChange(event: any) {
+    console.log('Dropdown changed:', event.changedDropdown.name);
+    console.log('New value:', event.changedDropdown.selectedValue);
+  }
+  
+  getCategories() {
+    return [{ id: 1, name: 'Electronics' }, { id: 2, name: 'Clothing' }];
+  }
+  
+  getProducts(categoryId: number) {
+    // Filter products by category
+    return this.products.filter(p => p.categoryId === categoryId);
+  }
+}
+```

@@ -1,0 +1,406 @@
+---
+title: 'Types & Interfaces'
+description: 'TypeScript type definitions for ngx-depend-dropdown'
+---
+
+## DropdownNode
+
+Interface defining the configuration for a single dropdown in the chain.
+
+```typescript
+interface DropdownNode {
+  name: string;
+  visibility: (node?: Node) => boolean;
+  selectedValue?: any;
+  values: any[];
+  setValues: (node?: Node) => Observable<any[]> | any[];
+  dependent?: string | string[];
+  visibilityValue?: boolean;
+  placeholder?: string;
+  label?: string;
+  required?: string | boolean;
+  errorMessage?: string;
+  isMultiple?: boolean;
+}
+```
+
+### Properties
+
+<ParamField path="name" type="string" required>
+  Unique identifier for the dropdown node. Used to reference this dropdown in dependency chains.
+  
+  ```typescript
+  name: 'country'
+  ```
+</ParamField>
+
+<ParamField path="visibility" type="(node?: Node) => boolean" required>
+  Function that determines whether this dropdown should be visible/enabled. Returns `true` to show the dropdown, `false` to hide or disable it based on `unavailableType` config.
+  
+  <Expandable title="Example">
+    ```typescript
+    // Always visible
+    visibility: () => true
+    
+    // Visible only when parent has value
+    visibility: () => !!this.service.getNodeValue('country')
+    
+    // Complex visibility logic
+    visibility: () => {
+      const category = this.service.getNodeValue('category');
+      return category && category.hasProducts;
+    }
+    ```
+  </Expandable>
+</ParamField>
+
+<ParamField path="values" type="any[]" required>
+  Array of available options for this dropdown. Populated by the `setValues` function.
+  
+  ```typescript
+  values: [] // Initially empty, populated by setValues
+  ```
+</ParamField>
+
+<ParamField path="setValues" type="(node?: Node) => Observable<any[]> | any[]" required>
+  Function that returns the available options for this dropdown. Can return a static array or an Observable for async data.
+  
+  <Expandable title="Examples">
+    ```typescript
+    // Static array
+    setValues: () => [
+      { id: 1, name: 'Option 1' },
+      { id: 2, name: 'Option 2' }
+    ]
+    
+    // Filtered based on parent selection
+    setValues: () => {
+      const parentId = this.service.getNodeValue('parent')?.id;
+      return this.items.filter(item => item.parentId === parentId);
+    }
+    
+    // Observable from HTTP request
+    setValues: () => {
+      const parentId = this.service.getNodeValue('parent')?.id;
+      return this.http.get(`/api/items?parentId=${parentId}`);
+    }
+    ```
+  </Expandable>
+</ParamField>
+
+<ParamField path="selectedValue" type="any">
+  The currently selected value for this dropdown. Can be set initially or updated by user interaction.
+  
+  Default: `null`
+  
+  ```typescript
+  selectedValue: { id: 1, name: 'United States' }
+  ```
+</ParamField>
+
+<ParamField path="dependent" type="string | string[]">
+  Name(s) of parent dropdown(s) that this dropdown depends on. When a parent value changes, this dropdown is reset.
+  
+  <Expandable title="Examples">
+    ```typescript
+    // Single dependency
+    dependent: 'country'
+    
+    // Multiple dependencies
+    dependent: ['category', 'subcategory']
+    ```
+  </Expandable>
+</ParamField>
+
+<ParamField path="visibilityValue" type="boolean">
+  Cached result of the `visibility()` function. Managed internally by the component.
+  
+  Default: Evaluated from `visibility()` function
+</ParamField>
+
+<ParamField path="placeholder" type="string">
+  Placeholder text displayed when no value is selected.
+  
+  Default: `'Select'`
+  
+  ```typescript
+  placeholder: 'Choose a country'
+  ```
+</ParamField>
+
+<ParamField path="label" type="string">
+  Display label for the dropdown.
+  
+  ```typescript
+  label: 'Country'
+  ```
+</ParamField>
+
+<ParamField path="required" type="string | boolean">
+  Marks the dropdown as required for form validation.
+  
+  ```typescript
+  required: true
+  // or
+  required: 'This field is required'
+  ```
+</ParamField>
+
+<ParamField path="errorMessage" type="string">
+  Custom error message to display for validation failures.
+  
+  ```typescript
+  errorMessage: 'Please select a valid option'
+  ```
+</ParamField>
+
+<ParamField path="isMultiple" type="boolean">
+  Enables multi-select mode for the dropdown.
+  
+  Default: `false`
+  
+  ```typescript
+  isMultiple: true
+  ```
+</ParamField>
+
+### Usage Example
+
+```typescript
+const countryDropdown: DropdownNode = {
+  name: 'country',
+  label: 'Country',
+  placeholder: 'Select a country',
+  required: true,
+  visibility: () => true,
+  setValues: () => this.http.get<any[]>('/api/countries'),
+  values: [],
+  selectedValue: null
+};
+
+const cityDropdown: DropdownNode = {
+  name: 'city',
+  label: 'City',
+  placeholder: 'Select a city',
+  dependent: 'country',
+  visibility: () => !!this.service.getNodeValue('country'),
+  setValues: () => {
+    const countryId = this.service.getNodeValue('country')?.id;
+    return this.cities.filter(city => city.countryId === countryId);
+  },
+  values: []
+};
+```
+
+## DropdownData
+
+Type alias for an array of `DropdownNode` objects.
+
+```typescript
+type DropdownData = DropdownNode[];
+```
+
+### Usage Example
+
+```typescript
+import { DropdownData } from 'ngx-depend-dropdown';
+
+const myDropdowns: DropdownData = [
+  {
+    name: 'country',
+    visibility: () => true,
+    setValues: () => countries,
+    values: []
+  },
+  {
+    name: 'state',
+    dependent: 'country',
+    visibility: () => !!this.service.getNodeValue('country'),
+    setValues: () => states,
+    values: []
+  }
+];
+```
+
+## DropdownConfig
+
+Interface for configuring global dropdown behavior and styling.
+
+```typescript
+interface DropdownConfig {
+  unavailableType?: UnavailableDropdownType;
+  containerClass?: string | string[];
+  nodeClass?: string | string[];
+}
+```
+
+### Properties
+
+<ParamField path="unavailableType" type="UnavailableDropdownType">
+  Determines how unavailable (non-visible) dependent dropdowns are displayed.
+  
+  Options: `'disabled'` | `'invisible'`
+  
+  - `'disabled'`: Dropdown is visible but disabled/greyed out
+  - `'invisible'`: Dropdown is completely hidden from view
+  
+  <Expandable title="Example">
+    ```typescript
+    config = {
+      unavailableType: 'disabled' // Show disabled dropdowns
+    };
+    
+    config = {
+      unavailableType: 'invisible' // Hide unavailable dropdowns
+    };
+    ```
+  </Expandable>
+</ParamField>
+
+<ParamField path="containerClass" type="string | string[]">
+  CSS class(es) to apply to the dropdown container element.
+  
+  <Expandable title="Example">
+    ```typescript
+    // Single class
+    containerClass: 'my-dropdown-container'
+    
+    // Multiple classes
+    containerClass: ['dropdown-wrapper', 'col-md-6']
+    ```
+  </Expandable>
+</ParamField>
+
+<ParamField path="nodeClass" type="string | string[]">
+  CSS class(es) to apply to individual dropdown node elements.
+  
+  <Expandable title="Example">
+    ```typescript
+    // Single class
+    nodeClass: 'custom-dropdown'
+    
+    // Multiple classes
+    nodeClass: ['form-control', 'dropdown-select']
+    ```
+  </Expandable>
+</ParamField>
+
+### Usage Example
+
+```typescript
+import { DropdownConfig } from 'ngx-depend-dropdown';
+
+const config: DropdownConfig = {
+  unavailableType: 'disabled',
+  containerClass: 'row',
+  nodeClass: ['col-md-4', 'mb-3']
+};
+```
+
+```html
+<ngx-depend-dropdown [data]="dropdowns" [config]="config"></ngx-depend-dropdown>
+```
+
+## UnavailableDropdownType
+
+Type defining how unavailable dependent dropdowns should be rendered.
+
+```typescript
+type UnavailableDropdownType = 'disabled' | 'invisible';
+```
+
+### Values
+
+<ParamField path="disabled" type="'disabled'">
+  Dropdown remains visible but is disabled and cannot be interacted with. Typically shown with reduced opacity or greyed out styling.
+  
+  Best for: Forms where users should see all fields even if not all are currently available.
+</ParamField>
+
+<ParamField path="invisible" type="'invisible'">
+  Dropdown is completely hidden from the DOM when its visibility function returns `false`.
+  
+  Best for: Progressive disclosure patterns where fields should only appear when relevant.
+</ParamField>
+
+### Usage Example
+
+```typescript
+import { UnavailableDropdownType } from 'ngx-depend-dropdown';
+
+const displayMode: UnavailableDropdownType = 'disabled';
+
+const config = {
+  unavailableType: displayMode
+};
+```
+
+## Complete Type Example
+
+```typescript
+import { Component } from '@angular/core';
+import { 
+  DropdownData, 
+  DropdownNode, 
+  DropdownConfig,
+  UnavailableDropdownType 
+} from 'ngx-depend-dropdown';
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+import { Observable } from 'rxjs';
+
+@Component({
+  selector: 'app-typed-example',
+  template: `
+    <ngx-depend-dropdown 
+      [data]="dropdowns" 
+      [config]="config"
+      (onChange)="handleChange($event)">
+    </ngx-depend-dropdown>
+  `
+})
+export class TypedExampleComponent {
+  unavailableMode: UnavailableDropdownType = 'disabled';
+  
+  config: DropdownConfig = {
+    unavailableType: this.unavailableMode,
+    containerClass: ['row', 'g-3'],
+    nodeClass: 'col-md-6'
+  };
+  
+  dropdowns: DropdownData = [
+    {
+      name: 'category',
+      label: 'Category',
+      placeholder: 'Select category',
+      required: true,
+      visibility: () => true,
+      setValues: () => this.getCategories(),
+      values: []
+    },
+    {
+      name: 'product',
+      label: 'Product',
+      placeholder: 'Select product',
+      dependent: 'category',
+      visibility: () => !!this.service.getNodeValue('category'),
+      setValues: () => this.getProducts(),
+      values: []
+    }
+  ];
+  
+  constructor(private service: NgxDependDropdownService) {}
+  
+  getCategories(): Observable<any[]> {
+    return this.http.get<any[]>('/api/categories');
+  }
+  
+  getProducts(): any[] {
+    const categoryId = this.service.getNodeValue('category')?.id;
+    return this.products.filter(p => p.categoryId === categoryId);
+  }
+  
+  handleChange(event: { nativeEvent: Event; changedDropdown: DropdownNode; fullData: DropdownData }) {
+    console.log('Changed:', event.changedDropdown.name);
+  }
+}
+```

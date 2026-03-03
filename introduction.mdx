@@ -1,0 +1,113 @@
+---
+title: Introduction
+description: A lightweight Angular library for creating linked dependent dropdown components with cascade behavior
+---
+
+# ngx-depend-dropdown
+
+A powerful yet lightweight Angular library that enables you to create linked dependent dropdowns with cascade behavior. Perfect for forms that require hierarchical selection flows like country/state/city, category/subcategory, or any dependent data relationships.
+
+<Note>
+  Library is under active development. Please report any issues or suggestions on [GitHub](https://github.com/yasincelebi/ngx-depend-dropdown).
+</Note>
+
+## Why ngx-depend-dropdown?
+
+Building dependent dropdowns from scratch involves complex state management, visibility logic, and data synchronization. This library handles all that complexity for you with a simple, declarative API.
+
+<CardGroup cols={2}>
+  <Card title="Quick Start" icon="rocket" href="/quickstart">
+    Get up and running with a working example in minutes
+  </Card>
+  <Card title="Installation" icon="download" href="/installation">
+    Install the library using npm, yarn, or pnpm
+  </Card>
+  <Card title="API Reference" icon="code" href="/api/component">
+    Explore the complete API documentation
+  </Card>
+  <Card title="Examples" icon="lightbulb" href="/examples/basic-usage">
+    Browse real-world examples and use cases
+  </Card>
+</CardGroup>
+
+## Key Features
+
+<CardGroup cols={2}>
+  <Card title="Linked Cascading Dropdowns" icon="link">
+    Create dropdown chains where each selection controls the visibility and data of dependent dropdowns
+  </Card>
+  <Card title="Observable & Array Data Sources" icon="database">
+    Support for both static arrays and RxJS observables for dynamic data loading from APIs
+  </Card>
+  <Card title="Custom Styling" icon="palette">
+    Fully customizable with CSS classes for both container and individual dropdown nodes
+  </Card>
+  <Card title="Built-in Validation" icon="shield-check">
+    Required field validation with custom error messages out of the box
+  </Card>
+  <Card title="Multiselect Support" icon="list-check">
+    Enable multiple selections on any dropdown in the chain
+  </Card>
+  <Card title="Accessibility Ready" icon="universal-access">
+    Built with HTML5 native elements and accessibility best practices
+  </Card>
+</CardGroup>
+
+## How It Works
+
+Define your dropdown configuration with visibility rules and dependencies:
+
+```typescript
+const dropdownData: DropdownData = [
+  {
+    name: 'country',
+    visibility: () => true,
+    setValues: () => this.http.get('/api/countries'),
+    placeholder: 'Select Country'
+  },
+  {
+    name: 'city',
+    visibility: () => !!this.dropdownService.getNodeValue('country'),
+    dependent: 'country',
+    setValues: () => this.http.get('/api/cities'),
+    placeholder: 'Select City'
+  }
+];
+```
+
+The library automatically:
+- Shows/hides dependent dropdowns based on visibility rules
+- Resets dependent values when parent selections change
+- Manages state synchronization across the dropdown chain
+- Handles async data loading with observables
+
+## What You Can Build
+
+- **Location Selectors**: Country → State → City cascades
+- **Category Browsers**: Department → Category → Subcategory hierarchies
+- **Product Configurators**: Brand → Model → Variant selections
+- **Organizational Hierarchies**: Company → Division → Department → Team
+- **Date/Time Pickers**: Year → Month → Day custom selectors
+- **Dynamic Forms**: Any form where field visibility depends on previous selections
+
+## Browser Support
+
+ngx-depend-dropdown works with all modern browsers and Angular 13+.
+
+## License
+
+MIT License - feel free to use in personal and commercial projects.
+
+## Next Steps
+
+<Steps>
+  <Step title="Install the library">
+    Follow the [installation guide](/installation) to add ngx-depend-dropdown to your Angular project
+  </Step>
+  <Step title="Follow the quick start">
+    Build your first dependent dropdown with the [quick start guide](/quickstart)
+  </Step>
+  <Step title="Explore examples">
+    Check out [real-world examples](/examples/basic-usage) for common use cases
+  </Step>
+</Steps>

@@ -1,0 +1,545 @@
+---
+title: Styling
+description: Customize dropdown appearance with CSS classes and theming
+---
+
+The ngx-depend-dropdown library provides flexible styling options through CSS classes and supports integration with popular CSS frameworks. This guide covers all styling approaches and customization options.
+
+## Default CSS Classes
+
+The library applies several CSS classes to different elements that you can target for styling:
+
+### Container Classes
+
+```html
+<div class="depend-dropdown-container">
+  <!-- All dropdowns are wrapped in this container -->
+</div>
+```
+
+### Dropdown Node Classes
+
+```html
+<label class="ngx-depend-dropdown-label" for="dropdown-name">
+  Label Text
+</label>
+
+<select class="depend-dropdown-node-select">
+  <option class="depend-dropdown-node-option depend-dropdown-placeholder">
+    Placeholder text
+  </option>
+  <option class="depend-dropdown-node-option">
+    Option 1
+  </option>
+</select>
+
+<div class="depend-dropdown-node-error-message">
+  Error message text
+</div>
+```
+
+### State Classes
+
+```html
+<!-- Disabled dropdown -->
+<select class="depend-dropdown-node-select disabled">
+  <!-- options -->
+</select>
+
+<!-- Selected option -->
+<option class="depend-dropdown-node-option selected">
+  Selected Option
+</option>
+```
+
+## Custom CSS Classes
+
+Add your own classes using the `DropdownConfig` interface:
+
+<Tabs>
+  <Tab title="Container Classes">
+    ```typescript
+    import { DropdownConfig } from 'ngx-depend-dropdown';
+    
+    config: DropdownConfig = {
+      containerClass: 'my-dropdown-wrapper'
+    };
+    ```
+    
+    Results in:
+    ```html
+    <div class="depend-dropdown-container my-dropdown-wrapper">
+      <!-- dropdowns -->
+    </div>
+    ```
+    
+    You can also pass an array:
+    ```typescript
+    config: DropdownConfig = {
+      containerClass: ['row', 'g-3', 'my-4']
+    };
+    ```
+  </Tab>
+  
+  <Tab title="Node Classes">
+    ```typescript
+    config: DropdownConfig = {
+      nodeClass: 'custom-select'
+    };
+    ```
+    
+    Results in:
+    ```html
+    <select class="depend-dropdown-node-select custom-select">
+      <!-- options -->
+    </select>
+    ```
+    
+    Multiple classes:
+    ```typescript
+    config: DropdownConfig = {
+      nodeClass: ['form-select', 'form-select-lg', 'mb-3']
+    };
+    ```
+  </Tab>
+</Tabs>
+
+## CSS Framework Integration
+
+### Bootstrap 5
+
+```typescript
+import { Component } from '@angular/core';
+import { DropdownConfig, DropdownData } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-bootstrap-dropdowns',
+  template: `
+    <ngx-depend-dropdown 
+      [data]="dropdownData" 
+      [config]="config">
+    </ngx-depend-dropdown>
+  `,
+  styles: [`
+    ::ng-deep .ngx-depend-dropdown-label {
+      @extend .form-label;
+      font-weight: 500;
+    }
+    
+    ::ng-deep .depend-dropdown-node-error-message {
+      @extend .invalid-feedback;
+      display: block;
+    }
+  `]
+})
+export class BootstrapDropdownsComponent {
+  config: DropdownConfig = {
+    containerClass: ['container', 'my-4'],
+    nodeClass: ['form-select', 'mb-3']
+  };
+  
+  dropdownData: DropdownData = [
+    {
+      name: 'country',
+      label: 'Country',
+      visibility: () => true,
+      values: [],
+      setValues: () => this.getCountries()
+    }
+  ];
+}
+```
+
+### Tailwind CSS
+
+```typescript
+@Component({
+  selector: 'app-tailwind-dropdowns',
+  template: `
+    <ngx-depend-dropdown 
+      [data]="dropdownData" 
+      [config]="config">
+    </ngx-depend-dropdown>
+  `,
+  styles: [`
+    ::ng-deep .ngx-depend-dropdown-label {
+      @apply block text-sm font-medium text-gray-700 mb-1;
+    }
+    
+    ::ng-deep .depend-dropdown-node-select {
+      @apply focus:ring-2 focus:ring-blue-500 focus:border-blue-500;
+    }
+    
+    ::ng-deep .depend-dropdown-node-select.disabled {
+      @apply bg-gray-100 cursor-not-allowed;
+    }
+    
+    ::ng-deep .depend-dropdown-node-error-message {
+      @apply mt-1 text-sm text-red-600;
+    }
+  `]
+})
+export class TailwindDropdownsComponent {
+  config: DropdownConfig = {
+    containerClass: 'space-y-4',
+    nodeClass: [
+      'block',
+      'w-full',
+      'px-3',
+      'py-2',
+      'border',
+      'border-gray-300',
+      'rounded-md',
+      'shadow-sm'
+    ]
+  };
+  
+  dropdownData: DropdownData = [
+    // ... dropdown data
+  ];
+}
+```
+
+### Material Design (Custom)
+
+```typescript
+@Component({
+  selector: 'app-material-dropdowns',
+  template: `
+    <ngx-depend-dropdown 
+      [data]="dropdownData" 
+      [config]="config">
+    </ngx-depend-dropdown>
+  `,
+  styles: [`
+    ::ng-deep .depend-dropdown-container {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    
+    ::ng-deep .ngx-depend-dropdown-label {
+      color: rgba(0, 0, 0, 0.6);
+      font-size: 12px;
+      font-weight: 400;
+      letter-spacing: 0.4px;
+      margin-bottom: 4px;
+    }
+    
+    ::ng-deep .depend-dropdown-node-select {
+      border: 1px solid rgba(0, 0, 0, 0.23);
+      border-radius: 4px;
+      padding: 16px 14px;
+      font-size: 16px;
+      transition: border-color 0.2s;
+    }
+    
+    ::ng-deep .depend-dropdown-node-select:hover {
+      border-color: rgba(0, 0, 0, 0.87);
+    }
+    
+    ::ng-deep .depend-dropdown-node-select:focus {
+      outline: none;
+      border-color: #1976d2;
+      border-width: 2px;
+    }
+    
+    ::ng-deep .depend-dropdown-node-select.disabled {
+      background-color: rgba(0, 0, 0, 0.04);
+      color: rgba(0, 0, 0, 0.38);
+      border-style: dashed;
+    }
+    
+    ::ng-deep .depend-dropdown-node-error-message {
+      color: #f44336;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+  `]
+})
+export class MaterialDropdownsComponent {
+  config: DropdownConfig = {
+    nodeClass: 'mat-select-styled'
+  };
+  
+  dropdownData: DropdownData = [
+    // ... dropdown data
+  ];
+}
+```
+
+## Custom Theming
+
+Create a comprehensive theme for your dropdowns:
+
+```css
+/* styles.css or component styles */
+
+/* Light Theme */
+.depend-dropdown-container.theme-light {
+  --dropdown-bg: #ffffff;
+  --dropdown-border: #d1d5db;
+  --dropdown-text: #1f2937;
+  --dropdown-focus: #3b82f6;
+  --dropdown-disabled-bg: #f3f4f6;
+  --dropdown-disabled-text: #9ca3af;
+  --dropdown-error: #ef4444;
+}
+
+/* Dark Theme */
+.depend-dropdown-container.theme-dark {
+  --dropdown-bg: #1f2937;
+  --dropdown-border: #4b5563;
+  --dropdown-text: #f9fafb;
+  --dropdown-focus: #60a5fa;
+  --dropdown-disabled-bg: #374151;
+  --dropdown-disabled-text: #6b7280;
+  --dropdown-error: #f87171;
+}
+
+/* Apply theme variables */
+::ng-deep .ngx-depend-dropdown-label {
+  color: var(--dropdown-text);
+}
+
+::ng-deep .depend-dropdown-node-select {
+  background-color: var(--dropdown-bg);
+  border-color: var(--dropdown-border);
+  color: var(--dropdown-text);
+}
+
+::ng-deep .depend-dropdown-node-select:focus {
+  border-color: var(--dropdown-focus);
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+::ng-deep .depend-dropdown-node-select.disabled {
+  background-color: var(--dropdown-disabled-bg);
+  color: var(--dropdown-disabled-text);
+}
+
+::ng-deep .depend-dropdown-node-error-message {
+  color: var(--dropdown-error);
+}
+```
+
+```typescript
+export class ThemedDropdownsComponent {
+  currentTheme = 'light';
+  
+  config: DropdownConfig = {
+    containerClass: `theme-${this.currentTheme}`
+  };
+  
+  toggleTheme() {
+    this.currentTheme = this.currentTheme === 'light' ? 'dark' : 'light';
+    this.config = {
+      ...this.config,
+      containerClass: `theme-${this.currentTheme}`
+    };
+  }
+}
+```
+
+## Responsive Styling
+
+Make dropdowns responsive with CSS:
+
+```css
+/* Mobile-first approach */
+::ng-deep .depend-dropdown-container {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+}
+
+::ng-deep .depend-dropdown-node-select {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 16px; /* Prevents zoom on iOS */
+}
+
+/* Tablet and up */
+@media (min-width: 768px) {
+  ::ng-deep .depend-dropdown-container {
+    flex-direction: row;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+  }
+  
+  ::ng-deep .depend-dropdown-node-select {
+    font-size: 14px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  ::ng-deep .depend-dropdown-container {
+    gap: 2rem;
+  }
+}
+```
+
+```typescript
+config: DropdownConfig = {
+  containerClass: 'responsive-grid',
+  nodeClass: 'responsive-select'
+};
+```
+
+## Styling Options Reference
+
+<ParamField path="containerClass" type="string | string[]">
+  CSS class(es) applied to the main container div.
+  
+  ```typescript
+  // Single class
+  containerClass: 'my-container'
+  
+  // Multiple classes
+  containerClass: ['container', 'mx-auto', 'p-4']
+  ```
+</ParamField>
+
+<ParamField path="nodeClass" type="string | string[]">
+  CSS class(es) applied to each select element.
+  
+  ```typescript
+  // Single class
+  nodeClass: 'form-control'
+  
+  // Multiple classes
+  nodeClass: ['form-select', 'form-select-lg']
+  ```
+</ParamField>
+
+## Complete Styling Example
+
+```typescript
+import { Component } from '@angular/core';
+import { DropdownConfig, DropdownData } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-styled-dropdowns',
+  template: `
+    <ngx-depend-dropdown 
+      [data]="dropdownData" 
+      [config]="config"
+      (onChange)="handleChange($event)">
+    </ngx-depend-dropdown>
+  `,
+  styles: [`
+    ::ng-deep .custom-dropdown-container {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 2rem;
+      border-radius: 12px;
+    }
+    
+    ::ng-deep .ngx-depend-dropdown-label {
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 8px;
+    }
+    
+    ::ng-deep .elegant-select {
+      background: white;
+      border: 2px solid transparent;
+      border-radius: 8px;
+      padding: 12px 16px;
+      font-size: 15px;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    }
+    
+    ::ng-deep .elegant-select:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+    
+    ::ng-deep .elegant-select:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 4px 16px rgba(102, 126, 234, 0.3);
+    }
+    
+    ::ng-deep .elegant-select.disabled {
+      background: #f5f5f5;
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+    
+    ::ng-deep .depend-dropdown-node-error-message {
+      color: #fff;
+      background: rgba(239, 68, 68, 0.9);
+      padding: 8px 12px;
+      border-radius: 6px;
+      font-size: 13px;
+      margin-top: 8px;
+    }
+  `]
+})
+export class StyledDropdownsComponent {
+  config: DropdownConfig = {
+    containerClass: 'custom-dropdown-container',
+    nodeClass: 'elegant-select',
+    unavailableType: 'disabled'
+  };
+  
+  dropdownData: DropdownData = [
+    {
+      name: 'category',
+      label: 'Select Category',
+      required: true,
+      errorMessage: 'Please choose a category',
+      visibility: () => true,
+      values: [],
+      setValues: () => this.getCategories()
+    },
+    {
+      name: 'subcategory',
+      label: 'Select Subcategory',
+      dependent: 'category',
+      visibility: () => true,
+      values: [],
+      setValues: () => []
+    }
+  ];
+  
+  handleChange(event: any) {
+    console.log('Selection changed:', event);
+  }
+  
+  getCategories() {
+    return [
+      { id: 1, name: 'Electronics' },
+      { id: 2, name: 'Clothing' },
+      { id: 3, name: 'Books' }
+    ];
+  }
+}
+```
+
+## Best Practices
+
+<Note>
+  **Use ::ng-deep Carefully**: The `::ng-deep` pseudo-class is deprecated but still necessary for styling library components. Always scope it to your component to avoid global style pollution.
+</Note>
+
+<Warning>
+  **View Encapsulation**: If using `::ng-deep` doesn't work, you can disable view encapsulation:
+  
+  ```typescript
+  @Component({
+    encapsulation: ViewEncapsulation.None
+  })
+  ```
+  
+  However, this makes your styles global, so use unique class names.
+</Warning>
+
+<Info>
+  **CSS Variables**: Using CSS custom properties (variables) provides the most flexible theming solution and allows runtime theme switching without recompiling styles.
+</Info>

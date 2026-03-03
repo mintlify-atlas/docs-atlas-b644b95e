@@ -1,0 +1,158 @@
+---
+title: 'Basic Usage'
+description: 'Get started with a simple dropdown setup using ngx-depend-dropdown'
+---
+
+## Overview
+
+This example demonstrates the most basic setup of ngx-depend-dropdown with a single dropdown that loads data from an array.
+
+## Complete Example
+
+<CodeGroup>
+
+```typescript component.ts
+import { Component, OnInit } from '@angular/core';
+import { DropdownConfig, DropdownData } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-basic-example',
+  templateUrl: './basic-example.component.html',
+  styleUrls: ['./basic-example.component.css']
+})
+export class BasicExampleComponent implements OnInit {
+  dropdownData: DropdownData = [];
+  dropdownConfig: DropdownConfig = {};
+
+  ngOnInit(): void {
+    this.setupDropdown();
+    this.configureDropdown();
+  }
+
+  setupDropdown() {
+    this.dropdownData = [
+      {
+        name: 'country',
+        visibility: () => true,
+        selectedValue: null,
+        placeholder: 'Select a country',
+        values: [],
+        setValues: () => {
+          return [
+            { id: 1, name: 'United States' },
+            { id: 2, name: 'Canada' },
+            { id: 3, name: 'United Kingdom' },
+            { id: 4, name: 'Germany' },
+            { id: 5, name: 'France' }
+          ];
+        }
+      }
+    ];
+  }
+
+  configureDropdown() {
+    this.dropdownConfig = {
+      unavailableType: 'disabled',
+      containerClass: 'dropdown-container',
+      nodeClass: 'form-select'
+    };
+  }
+
+  handleChange(event: any) {
+    console.log('Selected value:', event.changedDropdown.selectedValue);
+    console.log('Full data:', event.fullData);
+  }
+}
+```
+
+```html template.html
+<div class="container">
+  <h2>Select a Country</h2>
+  
+  <ngx-depend-dropdown 
+    [data]="dropdownData" 
+    [config]="dropdownConfig"
+    (onChange)="handleChange($event)">
+  </ngx-depend-dropdown>
+  
+  <div class="selected-info" *ngIf="dropdownData[0].selectedValue">
+    <p>You selected: <strong>{{ dropdownData[0].selectedValue.name }}</strong></p>
+  </div>
+</div>
+```
+
+```css styles.css
+.dropdown-container {
+  margin: 20px 0;
+}
+
+.form-select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  font-size: 16px;
+}
+
+.selected-info {
+  margin-top: 20px;
+  padding: 15px;
+  background-color: #f0f9ff;
+  border-left: 4px solid #3b82f6;
+  border-radius: 4px;
+}
+```
+
+</CodeGroup>
+
+## Module Setup
+
+Don't forget to import the module in your app:
+
+```typescript app.module.ts
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { NgxDependDropdownModule } from 'ngx-depend-dropdown';
+import { BasicExampleComponent } from './basic-example.component';
+
+@NgModule({
+  declarations: [BasicExampleComponent],
+  imports: [
+    BrowserModule,
+    NgxDependDropdownModule
+  ],
+  bootstrap: [BasicExampleComponent]
+})
+export class AppModule { }
+```
+
+## Key Concepts
+
+<Note>
+  Each dropdown node requires a `name`, `visibility` function, `values` array, and `setValues` function.
+</Note>
+
+### DropdownData Properties
+
+- **name**: Unique identifier for the dropdown
+- **visibility**: Function that returns `true` to show the dropdown
+- **selectedValue**: The currently selected value (null initially)
+- **placeholder**: Text shown when no value is selected
+- **values**: Array to store the dropdown options
+- **setValues**: Function that returns the options array
+
+### DropdownConfig Properties
+
+- **unavailableType**: How to handle unavailable dropdowns (`'disabled'` or `'invisible'`)
+- **containerClass**: CSS class(es) for the container
+- **nodeClass**: CSS class(es) for each dropdown element
+
+<Tip>
+  The `setValues` function can return either a plain array or an Observable for async data loading.
+</Tip>
+
+## Next Steps
+
+- Learn how to create [dependent chains](/examples/dependent-chains) with multiple linked dropdowns
+- Explore [observable data](/examples/observable-data) for dynamic data loading
+- Add [custom validation](/examples/custom-validation) to your dropdowns

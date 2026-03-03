@@ -1,0 +1,233 @@
+---
+title: 'NgxDependDropdownService'
+description: 'Service API reference for ngx-depend-dropdown'
+---
+
+## Overview
+
+Injectable service for managing dropdown data and retrieving node values. This service is used internally by the component and can be injected into your components to access dropdown state.
+
+**Injectable:** `providedIn: 'root'`
+
+```typescript
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+
+constructor(private dropdownService: NgxDependDropdownService) {}
+```
+
+## Properties
+
+### data
+
+Gets or sets the dropdown data array.
+
+```typescript
+set data(options: any)
+get data(): any
+```
+
+<ParamField path="data" type="DropdownData">
+  The array of dropdown nodes
+</ParamField>
+
+<Expandable title="Usage">
+  ```typescript
+  // Get current dropdown data
+  const currentData = this.dropdownService.data;
+  
+  // Set dropdown data (typically done by the component)
+  this.dropdownService.data = myDropdownData;
+  ```
+</Expandable>
+
+### dropdownConfig
+
+Gets or sets the dropdown configuration.
+
+```typescript
+set dropdownConfig(config: any)
+get dropdownConfig(): any
+```
+
+<ParamField path="dropdownConfig" type="DropdownConfig">
+  The dropdown configuration object
+</ParamField>
+
+<Expandable title="Usage">
+  ```typescript
+  // Get current config
+  const currentConfig = this.dropdownService.dropdownConfig;
+  
+  // Set config (typically done by the component)
+  this.dropdownService.dropdownConfig = {
+    unavailableType: 'disabled',
+    containerClass: 'custom-class'
+  };
+  ```
+</Expandable>
+
+## Methods
+
+### getNode()
+
+Retrieves a dropdown node by its name.
+
+```typescript
+getNode(node: string): DropdownNode | undefined
+```
+
+<ParamField path="node" type="string" required>
+  The name of the dropdown node to retrieve
+</ParamField>
+
+<ResponseField name="return" type="DropdownNode | undefined">
+  The dropdown node with the specified name, or `undefined` if not found
+</ResponseField>
+
+<Expandable title="Usage Example">
+  ```typescript
+  const countryNode = this.dropdownService.getNode('country');
+  
+  if (countryNode) {
+    console.log('Country dropdown:', countryNode);
+    console.log('Selected value:', countryNode.selectedValue);
+    console.log('Available values:', countryNode.values);
+  }
+  ```
+</Expandable>
+
+### getNodeValue()
+
+Retrieves the selected value of a dropdown node by its name.
+
+```typescript
+getNodeValue(node: any): any
+```
+
+<ParamField path="node" type="string">
+  The name of the dropdown node
+</ParamField>
+
+<ResponseField name="return" type="any">
+  The `selectedValue` property of the node, or `undefined` if the node is not found
+</ResponseField>
+
+<Expandable title="Usage Example">
+  ```typescript
+  // Get the selected country value
+  const selectedCountry = this.dropdownService.getNodeValue('country');
+  
+  // Use it to filter dependent dropdown values
+  setValues: () => {
+    const countryId = this.dropdownService.getNodeValue('country')?.id;
+    return this.cities.filter(city => city.countryId === countryId);
+  }
+  ```
+</Expandable>
+
+## Common Use Cases
+
+### Accessing Selected Values
+
+The service is commonly injected to access selected values when defining dependent dropdowns:
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-location',
+  template: `
+    <ngx-depend-dropdown [data]="dropdowns" [config]="config"></ngx-depend-dropdown>
+  `
+})
+export class LocationComponent {
+  dropdowns = [
+    {
+      name: 'country',
+      label: 'Country',
+      visibility: () => true,
+      setValues: () => this.countries,
+      values: []
+    },
+    {
+      name: 'state',
+      label: 'State',
+      dependent: 'country',
+      visibility: () => !!this.service.getNodeValue('country'),
+      setValues: () => {
+        const countryId = this.service.getNodeValue('country')?.id;
+        return this.states.filter(s => s.countryId === countryId);
+      },
+      values: []
+    },
+    {
+      name: 'city',
+      label: 'City',
+      dependent: 'state',
+      visibility: () => !!this.service.getNodeValue('state'),
+      setValues: () => {
+        const stateId = this.service.getNodeValue('state')?.id;
+        return this.cities.filter(c => c.stateId === stateId);
+      },
+      values: []
+    }
+  ];
+  
+  config = { unavailableType: 'disabled' as const };
+  
+  countries = [
+    { id: 1, name: 'United States' },
+    { id: 2, name: 'Canada' }
+  ];
+  
+  states = [
+    { id: 1, name: 'California', countryId: 1 },
+    { id: 2, name: 'Texas', countryId: 1 },
+    { id: 3, name: 'Ontario', countryId: 2 }
+  ];
+  
+  cities = [
+    { id: 1, name: 'Los Angeles', stateId: 1 },
+    { id: 2, name: 'San Francisco', stateId: 1 },
+    { id: 3, name: 'Houston', stateId: 2 },
+    { id: 4, name: 'Toronto', stateId: 3 }
+  ];
+  
+  constructor(private service: NgxDependDropdownService) {}
+}
+```
+
+### Checking Node Existence
+
+Use `getNode()` to check if a dropdown exists before accessing its properties:
+
+```typescript
+const productNode = this.dropdownService.getNode('product');
+
+if (productNode && productNode.selectedValue) {
+  // Product is selected
+  this.loadProductDetails(productNode.selectedValue.id);
+}
+```
+
+### Multi-level Dependencies
+
+Access multiple parent values for complex dependency chains:
+
+```typescript
+{
+  name: 'variant',
+  label: 'Product Variant',
+  dependent: ['category', 'product'],
+  visibility: () => {
+    return !!(this.service.getNodeValue('category') && 
+              this.service.getNodeValue('product'));
+  },
+  setValues: () => {
+    const productId = this.service.getNodeValue('product')?.id;
+    return this.getVariants(productId);
+  },
+  values: []
+}
+```

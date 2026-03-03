@@ -1,0 +1,300 @@
+---
+title: 'Dependent Chains'
+description: 'Create multi-level dependent dropdowns that cascade based on selections'
+---
+
+## Overview
+
+Dependent chains allow you to create dropdowns where each selection determines the options available in the next dropdown. This is perfect for hierarchical data like Country → State → City.
+
+## Three-Level Dependent Dropdown
+
+<CodeGroup>
+
+```typescript component.ts
+import { Component, OnInit } from '@angular/core';
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+import { DropdownConfig, DropdownData } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-dependent-example',
+  templateUrl: './dependent-example.component.html',
+  styleUrls: ['./dependent-example.component.css']
+})
+export class DependentExampleComponent implements OnInit {
+  dropdownData: DropdownData = [];
+  dropdownConfig: DropdownConfig = {};
+
+  constructor(private dropdownService: NgxDependDropdownService) {}
+
+  ngOnInit(): void {
+    this.setupDependentDropdowns();
+    this.dropdownConfig = {
+      unavailableType: 'disabled',
+      containerClass: ['row', 'g-3'],
+      nodeClass: ['form-control', 'form-select']
+    };
+  }
+
+  setupDependentDropdowns() {
+    this.dropdownData = [
+      {
+        name: 'country',
+        visibility: () => true,
+        selectedValue: null,
+        placeholder: 'Select a country',
+        label: 'Country',
+        values: [],
+        setValues: () => {
+          return [
+            { id: 1, name: 'United States' },
+            { id: 2, name: 'Canada' },
+            { id: 3, name: 'United Kingdom' }
+          ];
+        }
+      },
+      {
+        name: 'state',
+        visibility: () => {
+          return !!this.dropdownService.getNodeValue('country');
+        },
+        selectedValue: null,
+        placeholder: 'Select a state',
+        label: 'State / Province',
+        values: [],
+        dependent: 'country',
+        setValues: () => {
+          const country = this.dropdownService.getNodeValue('country');
+          
+          if (country?.id === 1) {
+            return [
+              { id: 101, name: 'California' },
+              { id: 102, name: 'Texas' },
+              { id: 103, name: 'New York' },
+              { id: 104, name: 'Florida' }
+            ];
+          } else if (country?.id === 2) {
+            return [
+              { id: 201, name: 'Ontario' },
+              { id: 202, name: 'Quebec' },
+              { id: 203, name: 'British Columbia' }
+            ];
+          } else if (country?.id === 3) {
+            return [
+              { id: 301, name: 'England' },
+              { id: 302, name: 'Scotland' },
+              { id: 303, name: 'Wales' }
+            ];
+          }
+          return [];
+        }
+      },
+      {
+        name: 'city',
+        visibility: () => {
+          return !!this.dropdownService.getNodeValue('state');
+        },
+        selectedValue: null,
+        placeholder: 'Select a city',
+        label: 'City',
+        values: [],
+        dependent: 'state',
+        setValues: () => {
+          const state = this.dropdownService.getNodeValue('state');
+          
+          // California cities
+          if (state?.id === 101) {
+            return [
+              { id: 1001, name: 'Los Angeles' },
+              { id: 1002, name: 'San Francisco' },
+              { id: 1003, name: 'San Diego' }
+            ];
+          }
+          // Texas cities
+          else if (state?.id === 102) {
+            return [
+              { id: 1004, name: 'Houston' },
+              { id: 1005, name: 'Dallas' },
+              { id: 1006, name: 'Austin' }
+            ];
+          }
+          // Ontario cities
+          else if (state?.id === 201) {
+            return [
+              { id: 2001, name: 'Toronto' },
+              { id: 2002, name: 'Ottawa' },
+              { id: 2003, name: 'Mississauga' }
+            ];
+          }
+          // England cities
+          else if (state?.id === 301) {
+            return [
+              { id: 3001, name: 'London' },
+              { id: 3002, name: 'Manchester' },
+              { id: 3003, name: 'Birmingham' }
+            ];
+          }
+          
+          return [];
+        }
+      }
+    ];
+  }
+
+  handleChange(event: any) {
+    console.log('Changed dropdown:', event.changedDropdown.name);
+    console.log('Selected value:', event.changedDropdown.selectedValue);
+  }
+}
+```
+
+```html template.html
+<div class="container mt-4">
+  <h2>Location Selector</h2>
+  <p class="text-muted">Select a country to see available states, then select a state to see cities.</p>
+  
+  <ngx-depend-dropdown 
+    [data]="dropdownData" 
+    [config]="dropdownConfig"
+    (onChange)="handleChange($event)">
+  </ngx-depend-dropdown>
+  
+  <div class="selection-summary" *ngIf="dropdownData[2].selectedValue">
+    <h4>Your Selection:</h4>
+    <ul>
+      <li><strong>Country:</strong> {{ dropdownData[0].selectedValue?.name }}</li>
+      <li><strong>State:</strong> {{ dropdownData[1].selectedValue?.name }}</li>
+      <li><strong>City:</strong> {{ dropdownData[2].selectedValue?.name }}</li>
+    </ul>
+  </div>
+</div>
+```
+
+```css styles.css
+.container {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.text-muted {
+  color: #6c757d;
+  margin-bottom: 20px;
+}
+
+.row {
+  display: flex;
+  flex-wrap: wrap;
+  margin: -0.75rem;
+}
+
+.g-3 > * {
+  padding: 0.75rem;
+}
+
+.form-control, .form-select {
+  width: 100%;
+  padding: 0.5rem 0.75rem;
+  border: 1px solid #ced4da;
+  border-radius: 0.25rem;
+  font-size: 1rem;
+}
+
+.form-select:disabled {
+  background-color: #e9ecef;
+  opacity: 0.6;
+}
+
+.selection-summary {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #e7f5ff;
+  border-radius: 8px;
+  border-left: 4px solid #1971c2;
+}
+
+.selection-summary h4 {
+  margin-top: 0;
+  color: #1971c2;
+}
+
+.selection-summary ul {
+  list-style: none;
+  padding-left: 0;
+}
+
+.selection-summary li {
+  padding: 5px 0;
+}
+```
+
+</CodeGroup>
+
+## How It Works
+
+<Note>
+  The `dependent` property creates the relationship between dropdowns. When the parent dropdown changes, dependent children are automatically reset.
+</Note>
+
+### Key Features Explained
+
+1. **Visibility Control**: Each dependent dropdown uses the `visibility` function to check if its parent has a value:
+   ```typescript
+   visibility: () => {
+     return !!this.dropdownService.getNodeValue('country');
+   }
+   ```
+
+2. **Dependent Property**: Links the dropdown to its parent:
+   ```typescript
+   dependent: 'country'
+   ```
+
+3. **Dynamic Values**: The `setValues` function uses the parent's selected value to determine options:
+   ```typescript
+   setValues: () => {
+     const country = this.dropdownService.getNodeValue('country');
+     // Return different options based on country
+   }
+   ```
+
+## Service Methods
+
+<Tip>
+  Use the `NgxDependDropdownService` to access dropdown data from anywhere in your component.
+</Tip>
+
+### Available Methods
+
+- **getNodeValue(nodeName: string)**: Returns the selected value of a specific dropdown
+- **getNode(nodeName: string)**: Returns the complete node data for a dropdown
+
+```typescript
+// Example usage
+const selectedCountry = this.dropdownService.getNodeValue('country');
+const countryNode = this.dropdownService.getNode('country');
+```
+
+## Multiple Dependencies
+
+You can also create a dropdown that depends on multiple parents:
+
+```typescript
+{
+  name: 'shipping-option',
+  visibility: () => {
+    return !!this.dropdownService.getNodeValue('country') && 
+           !!this.dropdownService.getNodeValue('state');
+  },
+  dependent: ['country', 'state'],
+  setValues: () => {
+    // Returns options based on both country and state
+  }
+}
+```
+
+## Next Steps
+
+- Load data dynamically with [Observable data](/examples/observable-data)
+- Add [custom validation](/examples/custom-validation) to dependent dropdowns
+- Return to [basic usage](/examples/basic-usage) for fundamentals

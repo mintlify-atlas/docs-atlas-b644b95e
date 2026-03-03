@@ -1,0 +1,171 @@
+---
+title: Installation
+description: Install ngx-depend-dropdown in your Angular project
+---
+
+# Installation
+
+Get started with ngx-depend-dropdown by installing it via your preferred package manager.
+
+## Requirements
+
+<Info>
+  **Angular Version**: ngx-depend-dropdown requires Angular 13.1.0 or higher
+</Info>
+
+Before installing, ensure your project meets these requirements:
+
+- Angular 13.1.0 or higher
+- Node.js 14 or higher
+- TypeScript 4.0 or higher
+
+## Install the Package
+
+Choose your preferred package manager to install ngx-depend-dropdown:
+
+<CodeGroup>
+
+```bash npm
+npm install --save ngx-depend-dropdown
+```
+
+```bash yarn
+yarn add ngx-depend-dropdown
+```
+
+```bash pnpm
+pnpm add ngx-depend-dropdown
+```
+
+</CodeGroup>
+
+## Import the Module
+
+After installation, import `NgxDependDropdownModule` in your Angular module:
+
+### Standalone Components (Angular 14+)
+
+If you're using standalone components, import the module directly in your component:
+
+```typescript app.component.ts
+import { Component } from '@angular/core';
+import { NgxDependDropdownModule } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-root',
+  standalone: true,
+  imports: [NgxDependDropdownModule],
+  templateUrl: './app.component.html'
+})
+export class AppComponent {}
+```
+
+### NgModule-based (Traditional)
+
+For traditional NgModule-based applications, add it to your module's imports:
+
+```typescript app.module.ts
+import { NgModule } from '@angular/core';
+import { BrowserModule } from '@angular/platform-browser';
+import { HttpClientModule } from '@angular/common/http';
+import { NgxDependDropdownModule } from 'ngx-depend-dropdown';
+import { AppComponent } from './app.component';
+
+@NgModule({
+  declarations: [AppComponent],
+  imports: [
+    BrowserModule,
+    HttpClientModule,  // Required if using Observable data sources
+    NgxDependDropdownModule
+  ],
+  bootstrap: [AppComponent]
+})
+export class AppModule {}
+```
+
+<Note>
+  If you plan to load dropdown data from APIs using observables, make sure to import `HttpClientModule` as shown above.
+</Note>
+
+## Import Service
+
+The library provides `NgxDependDropdownService` for managing dropdown state. Import it in components where you need to access dropdown values:
+
+```typescript
+import { Component } from '@angular/core';
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+import { DropdownData, DropdownConfig } from 'NgxDependDropdown';
+
+@Component({
+  selector: 'app-example',
+  templateUrl: './example.component.html'
+})
+export class ExampleComponent {
+  constructor(private dropdownService: NgxDependDropdownService) {}
+}
+```
+
+## Import Types
+
+For TypeScript support, import the necessary types:
+
+```typescript
+import { DropdownData, DropdownNode, DropdownConfig } from 'NgxDependDropdown';
+```
+
+Available types:
+- `DropdownData`: Array of dropdown node configurations
+- `DropdownNode`: Individual dropdown configuration
+- `DropdownConfig`: Global configuration options
+- `UnavailableDropdownType`: Type for unavailable dropdown behavior ('disabled' | 'invisible')
+
+## Verify Installation
+
+To verify the installation was successful, check your `package.json`:
+
+```json package.json
+{
+  "dependencies": {
+    "ngx-depend-dropdown": "^0.0.9"
+  }
+}
+```
+
+## Troubleshooting
+
+<Warning>
+  If you encounter TypeScript errors related to module 'NgxDependDropdown', ensure your `tsconfig.json` has proper module resolution settings.
+</Warning>
+
+### Common Issues
+
+**Module not found error**
+
+If you see an error like `Cannot find module 'ngx-depend-dropdown'`, try:
+
+```bash
+# Clear node_modules and reinstall
+rm -rf node_modules package-lock.json
+npm install
+```
+
+**TypeScript errors**
+
+Ensure your `tsconfig.json` includes:
+
+```json tsconfig.json
+{
+  "compilerOptions": {
+    "moduleResolution": "node",
+    "esModuleInterop": true
+  }
+}
+```
+
+## Next Steps
+
+Now that you've installed ngx-depend-dropdown, you're ready to build your first dependent dropdown:
+
+<Card title="Quick Start Guide" icon="rocket" href="/quickstart">
+  Follow the quick start guide to create your first dependent dropdown in minutes
+</Card>

@@ -1,0 +1,545 @@
+---
+title: 'Custom Validation'
+description: 'Add validation with custom error messages to dropdown components'
+---
+
+## Overview
+
+The ngx-depend-dropdown library supports built-in validation with customizable error messages. You can mark dropdowns as required and display custom error messages when no value is selected.
+
+## Basic Validation Example
+
+<CodeGroup>
+
+```typescript component.ts
+import { Component, OnInit } from '@angular/core';
+import { NgxDependDropdownService } from 'ngx-depend-dropdown';
+import { DropdownConfig, DropdownData } from 'ngx-depend-dropdown';
+
+@Component({
+  selector: 'app-validation-example',
+  templateUrl: './validation-example.component.html',
+  styleUrls: ['./validation-example.component.css']
+})
+export class ValidationExampleComponent implements OnInit {
+  dropdownData: DropdownData = [];
+  dropdownConfig: DropdownConfig = {};
+  formSubmitted = false;
+
+  constructor(private dropdownService: NgxDependDropdownService) {}
+
+  ngOnInit(): void {
+    this.setupValidationDropdowns();
+    this.dropdownConfig = {
+      unavailableType: 'disabled',
+      containerClass: 'form-group',
+      nodeClass: 'form-control'
+    };
+  }
+
+  setupValidationDropdowns() {
+    this.dropdownData = [
+      {
+        name: 'department',
+        visibility: () => true,
+        selectedValue: null,
+        placeholder: 'Choose your department',
+        label: 'Department',
+        values: [],
+        required: true,
+        errorMessage: 'Please select a department to continue',
+        setValues: () => {
+          return [
+            { id: 1, name: 'Engineering' },
+            { id: 2, name: 'Marketing' },
+            { id: 3, name: 'Sales' },
+            { id: 4, name: 'Human Resources' }
+          ];
+        }
+      },
+      {
+        name: 'team',
+        visibility: () => {
+          return !!this.dropdownService.getNodeValue('department');
+        },
+        selectedValue: null,
+        placeholder: 'Choose your team',
+        label: 'Team',
+        values: [],
+        dependent: 'department',
+        required: true,
+        errorMessage: 'Team selection is mandatory',
+        setValues: () => {
+          const dept = this.dropdownService.getNodeValue('department');
+          
+          if (dept?.id === 1) {
+            return [
+              { id: 101, name: 'Frontend Team' },
+              { id: 102, name: 'Backend Team' },
+              { id: 103, name: 'DevOps Team' }
+            ];
+          } else if (dept?.id === 2) {
+            return [
+              { id: 201, name: 'Content Team' },
+              { id: 202, name: 'Social Media Team' },
+              { id: 203, name: 'SEO Team' }
+            ];
+          } else if (dept?.id === 3) {
+            return [
+              { id: 301, name: 'Inside Sales' },
+              { id: 302, name: 'Field Sales' },
+              { id: 303, name: 'Account Management' }
+            ];
+          } else if (dept?.id === 4) {
+            return [
+              { id: 401, name: 'Recruitment' },
+              { id: 402, name: 'Payroll' },
+              { id: 403, name: 'Employee Relations' }
+            ];
+          }
+          return [];
+        }
+      },
+      {
+        name: 'role',
+        visibility: () => {
+          return !!this.dropdownService.getNodeValue('team');
+        },
+        selectedValue: null,
+        placeholder: 'Choose your role',
+        label: 'Role',
+        values: [],
+        dependent: 'team',
+        required: true,
+        errorMessage: 'You must specify your role in the team',
+        setValues: () => {
+          return [
+            { id: 1, name: 'Team Lead' },
+            { id: 2, name: 'Senior Member' },
+            { id: 3, name: 'Member' },
+            { id: 4, name: 'Intern' }
+          ];
+        }
+      }
+    ];
+  }
+
+  isFormValid(): boolean {
+    return this.dropdownData.every(node => {
+      if (node.required) {
+        return node.selectedValue !== null && node.selectedValue !== undefined;
+      }
+      return true;
+    });
+  }
+
+  submitForm() {
+    this.formSubmitted = true;
+    
+    if (this.isFormValid()) {
+      console.log('Form is valid!');
+      console.log('Department:', this.dropdownData[0].selectedValue);
+      console.log('Team:', this.dropdownData[1].selectedValue);
+      console.log('Role:', this.dropdownData[2].selectedValue);
+      
+      alert('Form submitted successfully!');
+    } else {
+      console.log('Form has validation errors');
+      alert('Please complete all required fields');
+    }
+  }
+
+  resetForm() {
+    this.formSubmitted = false;
+    this.dropdownData.forEach(node => {
+      node.selectedValue = null;
+    });
+  }
+
+  handleChange(event: any) {
+    console.log('Dropdown changed:', event.changedDropdown.name);
+  }
+}
+```
+
+```html template.html
+<div class="container">
+  <div class="form-header">
+    <h2>Employee Registration Form</h2>
+    <p>All fields marked with <span class="required-marker">*</span> are required</p>
+  </div>
+  
+  <form class="validation-form">
+    <ngx-depend-dropdown 
+      [data]="dropdownData" 
+      [config]="dropdownConfig"
+      (onChange)="handleChange($event)">
+    </ngx-depend-dropdown>
+    
+    <div class="form-summary" *ngIf="dropdownData[2].selectedValue">
+      <h4>Your Selection:</h4>
+      <ul>
+        <li><strong>Department:</strong> {{ dropdownData[0].selectedValue?.name }}</li>
+        <li><strong>Team:</strong> {{ dropdownData[1].selectedValue?.name }}</li>
+        <li><strong>Role:</strong> {{ dropdownData[2].selectedValue?.name }}</li>
+      </ul>
+    </div>
+    
+    <div class="form-actions">
+      <button 
+        type="button" 
+        class="btn btn-primary" 
+        (click)="submitForm()"
+        [disabled]="!isFormValid()">
+        Submit Form
+      </button>
+      <button 
+        type="button" 
+        class="btn btn-secondary" 
+        (click)="resetForm()">
+        Reset
+      </button>
+    </div>
+    
+    <div class="validation-status" *ngIf="formSubmitted">
+      <div class="alert" [class.alert-success]="isFormValid()" [class.alert-danger]="!isFormValid()">
+        <span *ngIf="isFormValid()">All fields are valid!</span>
+        <span *ngIf="!isFormValid()">Please complete all required fields.</span>
+      </div>
+    </div>
+  </form>
+</div>
+```
+
+```css styles.css
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 30px;
+}
+
+.form-header h2 {
+  color: #212529;
+  margin-bottom: 10px;
+}
+
+.form-header p {
+  color: #6c757d;
+  margin-bottom: 30px;
+}
+
+.required-marker {
+  color: #dc3545;
+  font-weight: bold;
+}
+
+.validation-form {
+  background-color: #ffffff;
+  padding: 30px;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.form-group {
+  margin-bottom: 25px;
+}
+
+.form-control {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #ced4da;
+  border-radius: 4px;
+  font-size: 16px;
+  transition: border-color 0.2s;
+}
+
+.form-control:focus {
+  outline: none;
+  border-color: #80bdff;
+  box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.form-control:disabled {
+  background-color: #e9ecef;
+  opacity: 0.7;
+}
+
+/* Error message styling - automatically applied by the library */
+:host ::ng-deep .depend-dropdown-node-error-message {
+  color: #dc3545;
+  font-size: 14px;
+  margin-top: 5px;
+  display: block;
+}
+
+:host ::ng-deep .ngx-depend-dropdown-label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 600;
+  color: #495057;
+}
+
+.form-summary {
+  margin-top: 30px;
+  padding: 20px;
+  background-color: #d1ecf1;
+  border: 1px solid #bee5eb;
+  border-radius: 6px;
+}
+
+.form-summary h4 {
+  color: #0c5460;
+  margin-top: 0;
+}
+
+.form-summary ul {
+  list-style: none;
+  padding-left: 0;
+  margin-bottom: 0;
+}
+
+.form-summary li {
+  padding: 8px 0;
+  color: #0c5460;
+}
+
+.form-actions {
+  display: flex;
+  gap: 15px;
+  margin-top: 30px;
+}
+
+.btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background-color: #007bff;
+  color: white;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0056b3;
+}
+
+.btn-primary:disabled {
+  background-color: #6c757d;
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.btn-secondary {
+  background-color: #6c757d;
+  color: white;
+}
+
+.btn-secondary:hover {
+  background-color: #545b62;
+}
+
+.validation-status {
+  margin-top: 20px;
+}
+
+.alert {
+  padding: 15px;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.alert-success {
+  background-color: #d4edda;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+```
+
+</CodeGroup>
+
+## Validation Properties
+
+<Note>
+  The library automatically displays error messages when a required field is not selected.
+</Note>
+
+### Required Field Properties
+
+- **required**: Set to `true` or a string value to mark the dropdown as required
+- **errorMessage**: Custom message displayed when the required field is empty
+
+```typescript
+{
+  name: 'country',
+  required: true,
+  errorMessage: 'Please select a country',
+  // ... other properties
+}
+```
+
+## Conditional Validation
+
+You can make validation conditional based on other selections:
+
+<CodeGroup>
+
+```typescript conditional-validation.ts
+setupConditionalValidation() {
+  this.dropdownData = [
+    {
+      name: 'subscription-type',
+      visibility: () => true,
+      selectedValue: null,
+      placeholder: 'Select subscription type',
+      label: 'Subscription Type',
+      values: [],
+      required: true,
+      errorMessage: 'Subscription type is required',
+      setValues: () => [
+        { id: 1, name: 'Free' },
+        { id: 2, name: 'Premium' },
+        { id: 3, name: 'Enterprise' }
+      ]
+    },
+    {
+      name: 'billing-cycle',
+      visibility: () => {
+        const subscription = this.dropdownService.getNodeValue('subscription-type');
+        return subscription?.id !== 1; // Only show for paid plans
+      },
+      selectedValue: null,
+      placeholder: 'Select billing cycle',
+      label: 'Billing Cycle',
+      values: [],
+      dependent: 'subscription-type',
+      // Only required for paid plans
+      required: () => {
+        const subscription = this.dropdownService.getNodeValue('subscription-type');
+        return subscription?.id !== 1;
+      },
+      errorMessage: 'Please select a billing cycle for your subscription',
+      setValues: () => [
+        { id: 1, name: 'Monthly' },
+        { id: 2, name: 'Yearly' }
+      ]
+    }
+  ];
+}
+```
+
+</CodeGroup>
+
+<Tip>
+  The `required` property can accept a boolean value or a function that returns a boolean for dynamic validation.
+</Tip>
+
+## Form Validation Helper
+
+Create a reusable validation helper method:
+
+```typescript
+isFormValid(): boolean {
+  return this.dropdownData.every(node => {
+    // Skip non-visible dropdowns
+    if (!node.visibilityValue) {
+      return true;
+    }
+    
+    // Check if required field has a value
+    if (node.required) {
+      return node.selectedValue !== null && node.selectedValue !== undefined;
+    }
+    
+    return true;
+  });
+}
+
+getValidationErrors(): string[] {
+  const errors: string[] = [];
+  
+  this.dropdownData.forEach(node => {
+    if (node.required && node.visibilityValue && !node.selectedValue) {
+      errors.push(node.errorMessage || `${node.label || node.name} is required`);
+    }
+  });
+  
+  return errors;
+}
+```
+
+## Custom Error Styling
+
+The error message element has the class `depend-dropdown-node-error-message`. Customize it globally:
+
+```css styles.css (global)
+.depend-dropdown-node-error-message {
+  color: #e53e3e;
+  font-size: 14px;
+  margin-top: 6px;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+}
+
+.depend-dropdown-node-error-message::before {
+  content: '⚠ ';
+  margin-right: 4px;
+}
+```
+
+## Integration with Angular Forms
+
+While ngx-depend-dropdown doesn't directly integrate with Angular Reactive Forms, you can sync the values:
+
+```typescript
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+
+export class FormIntegrationComponent implements OnInit {
+  form: FormGroup;
+  dropdownData: DropdownData = [];
+
+  constructor(
+    private fb: FormBuilder,
+    private dropdownService: NgxDependDropdownService
+  ) {
+    this.form = this.fb.group({
+      department: [null, Validators.required],
+      team: [null, Validators.required],
+      role: [null, Validators.required]
+    });
+  }
+
+  handleChange(event: any) {
+    const name = event.changedDropdown.name;
+    const value = event.changedDropdown.selectedValue;
+    
+    // Update form control
+    if (this.form.contains(name)) {
+      this.form.patchValue({ [name]: value });
+    }
+  }
+
+  submitForm() {
+    if (this.form.valid) {
+      console.log('Form data:', this.form.value);
+    }
+  }
+}
+```
+
+## Next Steps
+
+- Review [basic usage](/examples/basic-usage) for fundamental concepts
+- Learn about [dependent chains](/examples/dependent-chains) for multi-level dropdowns
+- Explore [observable data](/examples/observable-data) for async validation
